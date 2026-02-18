@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [neko.context :as ctx]
             [neko.notify :as notify]
-            [neko.-utils :as u])
+            [neko.internal :as u])
   (:import android.app.Activity
            org.robolectric.Shadows
            org.robolectric.shadows.ShadowToast

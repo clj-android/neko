@@ -1,0 +1,15 @@
+<libraries>
+  <library
+      name=":@@:::debug"
+      jars="/home/claude/.gradle/caches/9.3.1/transforms/8fd0efeb4abdf14971f887ec4f74daba/transformed/out/jars/classes.jar:/home/claude/.gradle/caches/9.3.1/transforms/8fd0efeb4abdf14971f887ec4f74daba/transformed/out/jars/libs/R.jar"
+      resolved="org.clojure-android:neko:5.0.0-SNAPSHOT"
+      folder="/home/claude/.gradle/caches/9.3.1/transforms/8fd0efeb4abdf14971f887ec4f74daba/transformed/out"
+      manifest="AndroidManifest.xml"
+      resFolder="res"
+      assetsFolder="assets"
+      lintJar="lint.jar"
+      publicResources="public.txt"
+      symbolFile="R.txt"
+      externalAnnotations="annotations.zip"
+      proguardRules="proguard.txt"/>
+</libraries>

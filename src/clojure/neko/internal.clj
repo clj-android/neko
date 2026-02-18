@@ -1,4 +1,4 @@
-(ns neko.-utils
+(ns neko.internal
   "Internal utilities used by Neko, not intended for external consumption."
   (:require [clojure.string :as string])
   (:import [java.lang.reflect Method Constructor Field Modifier]))

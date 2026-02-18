@@ -1,6 +1,6 @@
 (ns neko.t-utils
   (:require [clojure.test :refer :all]
-            [neko.-utils :as u]))
+            [neko.internal :as u]))
 
 (deftest int-id
   (is (= (u/int-id :foo) (u/int-id :foo)))

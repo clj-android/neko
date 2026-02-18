@@ -1,7 +1,7 @@
 (ns neko.t-ui
   (:require [neko.ui :as ui]
             [neko.activity :refer [defactivity]]
-            [neko.-utils :as utils]
+            [neko.internal :as utils]
             [clojure.test :refer :all])
   (:import [android.widget Button LinearLayout TextView]
            android.content.pm.ActivityInfo

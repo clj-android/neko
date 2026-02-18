@@ -1,0 +1,7 @@
+org.clojure_android.neko-pngs-0 /home/claude/clojure-android/neko/build/generated/res/pngs/release
+org.clojure_android.neko-resValues-1 /home/claude/clojure-android/neko/build/generated/res/resValues/release
+org.clojure_android.neko-mergeReleaseResources-2 /home/claude/clojure-android/neko/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+org.clojure_android.neko-mergeReleaseResources-3 /home/claude/clojure-android/neko/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+org.clojure_android.neko-release-4 /home/claude/clojure-android/neko/build/intermediates/merged_res/release/mergeReleaseResources
+org.clojure_android.neko-main-5 /home/claude/clojure-android/neko/src/main/res
+org.clojure_android.neko-release-6 /home/claude/clojure-android/neko/src/release/res

@@ -2,10 +2,8 @@ package neko;
 
 import android.app.Application;
 import android.content.Context;
-import android.support.multidex.MultiDex;
 import android.util.Log;
 import clojure.lang.RT;
-import clojure.lang.Var;
 import clojure.lang.IFn;
 import java.lang.reflect.Method;
 
@@ -16,13 +14,14 @@ public class App extends Application {
 
     @Override
     public void onCreate() {
+        super.onCreate();
         instance = this;
         try {
-            Class dalvikCLclass = Class.forName("clojure.lang.DalvikDynamicClassLoader");
-            Method setContext = dalvikCLclass.getMethod("setContext", Context.class);
+            Class<?> androidCLclass = Class.forName("clojure.lang.AndroidDynamicClassLoader");
+            Method setContext = androidCLclass.getMethod("setContext", Context.class);
             setContext.invoke(null, this);
         } catch (ClassNotFoundException e) {
-            Log.i(TAG, "DalvikDynamicClassLoader is not found, probably Skummet is used.");
+            Log.i(TAG, "AndroidDynamicClassLoader not found — REPL support not available.");
         } catch (Exception e) {
             Log.e(TAG, "setContext method not found, check if your Clojure dependency is correct.");
         }
@@ -40,7 +39,7 @@ public class App extends Application {
             IFn init = (IFn)RT.var("neko.tools.repl", "init");
             init.invoke();
         } catch (Exception e) {
-            Log.i(TAG, "Could not find neko.tools.repl, probably Skummet is used.");
+            Log.i(TAG, "Could not find neko.tools.repl, REPL not available.");
         }
     }
 
@@ -63,12 +62,6 @@ public class App extends Application {
                    "ClojureLoadingThread",
                    1048576 // = 1MB, thread stack size in bytes
                    ).start();
-    }
-
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
-        MultiDex.install(this);
     }
 
 }
