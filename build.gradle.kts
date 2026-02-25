@@ -3,11 +3,11 @@ plugins {
     `maven-publish`
 }
 
-group = "org.clojure-android"
+group = "com.goodanser.clj-android"
 version = "5.0.0-SNAPSHOT"
 
 android {
-    namespace = "org.clojure_android.neko"
+    namespace = "com.goodanser.clj_android.neko"
     compileSdk = 35
 
     defaultConfig {
@@ -63,7 +63,7 @@ publishing {
             afterEvaluate {
                 from(components["release"])
             }
-            groupId = "org.clojure-android"
+            groupId = "com.goodanser.clj-android"
             artifactId = "neko"
             version = project.version.toString()
         }

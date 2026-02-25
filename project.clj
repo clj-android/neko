@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure-android/clojure "1.7.0-r2"]
+  :dependencies [[com.goodanser.clj-android/clojure "1.7.0-r2"]
                  [com.android.support/multidex "1.0.0" :extension "aar"]]
   :plugins [[lein-droid "0.4.6"]]
 
@@ -18,7 +18,7 @@
              [:android-common
               {:dependencies [[junit/junit "4.12"]
                               [org.robolectric/robolectric "3.0"]
-                              [org.clojure-android/droid-test "0.1.1-SNAPSHOT"]
+                              [com.goodanser.clj-android/droid-test "0.1.1-SNAPSHOT"]
                               [org.clojure/tools.nrepl "0.2.10"]]}]
 
              :local-testing
@@ -35,7 +35,7 @@
              :travis
              [:local-testing
               {:dependencies [[cloverage "1.0.6" :exclusions [org.clojure/tools.logging]]
-                              [org.clojure-android/tools.logging "0.3.2-r1"]]
+                              [com.goodanser.clj-android/tools.logging "0.3.2-r1"]]
                :plugins [[lein-shell "0.4.0"]]
                :aliases {"coverage" ["do" ["droid" "local-test" "cloverage"]
                                      ["shell" "curl" "-F"
