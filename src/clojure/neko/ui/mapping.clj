@@ -6,8 +6,7 @@
   (:use [neko.internal :only [keyword->static-field reflect-field]])
   (:import [android.widget LinearLayout Button CheckBox EditText ListView
             SearchView ImageView ImageView$ScaleType RelativeLayout ScrollView
-            FrameLayout Gallery GridView]
-           android.app.ProgressDialog
+            FrameLayout GridView]
            android.view.inputmethod.EditorInfo
            [android.view View ViewGroup$LayoutParams Gravity]))
 
@@ -20,7 +19,7 @@
                     :on-touch :on-create-context-menu :on-key :on-focus-change
                     :default-layout-params :linear-layout-params
                     :relative-layout-params :listview-layout-params
-                    :frame-layout-params :gallery-layout-params]
+                    :frame-layout-params]
            :value-namespaces
            {:gravity android.view.Gravity
             :visibility android.view.View}}
@@ -73,22 +72,16 @@
                :inherits :view}
     :scroll-view {:classname android.widget.ScrollView
                   :inherits :view}
-    :gallery {:classname android.widget.Gallery
-              :inherits :view-group
-              :traits [:on-item-click]}
     :grid-view {:classname android.widget.GridView
                 :inherits :view-group
                 :traits [:on-item-click]}
 
     ;; Other
     :layout-params {:classname ViewGroup$LayoutParams
-                    :values {:fill ViewGroup$LayoutParams/FILL_PARENT
+                    :values {:fill ViewGroup$LayoutParams/MATCH_PARENT
                              :wrap ViewGroup$LayoutParams/WRAP_CONTENT}
                     :value-namespaces
                     {:gravity android.view.Gravity}}
-    :progress-dialog {:classname android.app.ProgressDialog
-                      :values {:horizontal ProgressDialog/STYLE_HORIZONTAL
-                               :spinner ProgressDialog/STYLE_SPINNER}}
     }))
 
 (defn get-keyword-mapping
@@ -108,10 +101,8 @@
     android.widget.ImageView :image-view
     android.webkit.WebView :web-view
     android.widget.ScrollView :scroll-view
-    android.widget.Gallery :gallery
     android.widget.GridView :grid-view
-    android.widget.ProgressBar :progress-bar
-    android.app.ProgressDialog :progress-dialog}))
+    android.widget.ProgressBar :progress-bar}))
 
 (defn set-classname!
   "Connects the given keyword to the classname."

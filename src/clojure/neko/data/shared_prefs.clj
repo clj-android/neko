@@ -5,13 +5,11 @@
   (:import [android.content Context SharedPreferences SharedPreferences$Editor]
            neko.App))
 
-(def ^:private sp-access-modes {:private Context/MODE_PRIVATE
-                                :world-readable Context/MODE_WORLD_READABLE
-                                :world-writeable Context/MODE_WORLD_WRITEABLE})
+(def ^:private sp-access-modes {:private Context/MODE_PRIVATE})
 
 (defn get-shared-preferences
   "Returns the SharedPreferences object for the given name. Possible modes:
-  `:private`, `:world-readable`, `:world-writeable`."
+  `:private`."
   ([name mode]
    (get-shared-preferences App/instance name mode))
   ([^Context context, name mode]

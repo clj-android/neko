@@ -6,7 +6,6 @@
             [neko.internal :as u])
   (:import android.app.Activity
            [android.view View Window]
-           android.app.Fragment
            neko.ActivityWithState))
 
 (defn ^View get-decor-view
@@ -141,17 +140,3 @@
 
 (defn get-state [^ActivityWithState activity]
   (.getState activity))
-
-(defn simple-fragment
-  "Creates a fragment which contains the specified view. If a UI tree
-  was provided, it is inflated and then set as fragment's view."
-  ([context tree]
-     (simple-fragment (make-ui context tree)))
-  ([view]
-     (proxy [Fragment] []
-       (onCreateView [inflater container bundle]
-         (if (instance? View view)
-           view
-           (do
-             (println "One-argument version is deprecated. Please use (simple-fragment context tree)")
-             (make-ui view)))))))

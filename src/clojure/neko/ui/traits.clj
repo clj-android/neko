@@ -9,7 +9,7 @@
             [neko.internal :refer [memoized int-id closest-android-ancestor]])
   (:import [android.widget LinearLayout$LayoutParams ListView TextView SearchView
             ImageView RelativeLayout RelativeLayout$LayoutParams AdapterView
-            AbsListView$LayoutParams FrameLayout$LayoutParams Gallery$LayoutParams]
+            AbsListView$LayoutParams FrameLayout$LayoutParams]
            [android.view View ViewGroup$LayoutParams
             ViewGroup$MarginLayoutParams]
            android.graphics.Bitmap android.graphics.drawable.Drawable
@@ -307,20 +307,6 @@ next-level elements."
      wdg (if layout-view-type
            (AbsListView$LayoutParams. width height layout-view-type)
            (AbsListView$LayoutParams. width height)))))
-
-(deftrait :gallery-layout-params
-  {:attributes [:layout-width :layout-height]
-   :applies? (= container-type :gallery)}
-  [^View wdg, {:keys [layout-width layout-height]
-               :as attributes}
-   {:keys [container-type]}]
-  (let [^int width (->> (or layout-width :wrap)
-                        (kw/value :layout-params)
-                        (to-dimension (.getContext wdg)))
-        ^int height (->> (or layout-height :wrap)
-                         (kw/value :layout-params)
-                         (to-dimension (.getContext wdg)))]
-    (.setLayoutParams wdg (Gallery$LayoutParams. width height))))
 
 (deftrait :frame-layout-params
   "Takes `:layout-width`, `:layout-height`, `:layout-gravity` and different

@@ -112,7 +112,7 @@
 ;; ## Utilities
 
 (defn get-screen-orientation
-  "Returns either :portrait, :landscape, :square, or :undefined depending on the
+  "Returns either :portrait, :landscape, or :undefined depending on the
   current orientation of the device."
   ([]
    (get-screen-orientation App/instance))
@@ -120,5 +120,4 @@
    (condp = (.. context (getResources) (getConfiguration) orientation)
      Configuration/ORIENTATION_PORTRAIT :portrait
      Configuration/ORIENTATION_LANDSCAPE :landscape
-     Configuration/ORIENTATION_SQUARE :square
      :undefined)))

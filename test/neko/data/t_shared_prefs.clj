@@ -8,8 +8,7 @@
 (set! App/instance RuntimeEnvironment/application)
 
 (deftest get-shared-preferences
-  (is (instance? SharedPreferences (sp/get-shared-preferences "test" :private)))
-  (is (instance? SharedPreferences (sp/get-shared-preferences "test" :world-writeable))))
+  (is (instance? SharedPreferences (sp/get-shared-preferences "test" :private))))
 
 (deftest edit-shared-preferences
   (let [prefs (sp/get-shared-preferences "test2" :private)]
