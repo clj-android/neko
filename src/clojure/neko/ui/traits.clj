@@ -5,14 +5,19 @@
             [neko.listeners.view :as view-listeners]
             [neko.listeners.text-view :as text-view-listeners]
             [neko.listeners.adapter-view :as adapter-view]
+            [neko.listeners.compound-button :as compound-button-listeners]
+            [neko.listeners.seek-bar :as seek-bar-listeners]
+            [neko.listeners.rating-bar :as rating-bar-listeners]
             neko.listeners.search-view
             [neko.internal :refer [memoized int-id closest-android-ancestor]])
   (:import [android.widget LinearLayout$LayoutParams ListView TextView SearchView
             ImageView RelativeLayout RelativeLayout$LayoutParams AdapterView
-            AbsListView$LayoutParams FrameLayout$LayoutParams]
+            AbsListView$LayoutParams FrameLayout$LayoutParams
+            CompoundButton EditText ProgressBar SeekBar RatingBar]
            [android.view View ViewGroup$LayoutParams
             ViewGroup$MarginLayoutParams]
            android.graphics.Bitmap android.graphics.drawable.Drawable
+           android.graphics.Color
            android.net.Uri
            android.util.TypedValue
            android.content.Context
@@ -473,4 +478,127 @@ next-level elements."
   and sets it as an OnItemClickListener for the widget."
   [^AdapterView wdg, {:keys [on-item-click]} _]
   (.setOnItemClickListener wdg (adapter-view/on-item-click-call on-item-click)))
+
+;; ### View property traits
+
+(deftrait :background-color
+  "Takes :background-color attribute, which should be an integer color value,
+  and sets it as the background color for the view."
+  [^View wdg, {:keys [background-color]} _]
+  (.setBackgroundColor wdg (int background-color)))
+
+(deftrait :background
+  "Takes :background attribute, which can be a Drawable or an integer color
+  value, and sets it as the background for the view."
+  [^View wdg, {:keys [background]} _]
+  (condp instance? background
+    Drawable (.setBackgroundDrawable wdg ^Drawable background)
+    (.setBackgroundColor wdg (int background))))
+
+(deftrait :visibility
+  "Takes :visibility attribute, which should be one of :visible, :invisible,
+  or :gone, and sets the view's visibility accordingly."
+  [^View wdg, {:keys [visibility]} _]
+  (.setVisibility wdg (int (kw/value :view visibility :visibility))))
+
+(deftrait :enabled
+  "Takes :enabled attribute (boolean) and sets whether the view is enabled."
+  [^View wdg, {:keys [enabled]} _]
+  (.setEnabled wdg (boolean enabled)))
+
+(deftrait :content-description
+  "Takes :content-description attribute (string) and sets the view's content
+  description for accessibility."
+  [^View wdg, {:keys [content-description]} _]
+  (.setContentDescription wdg ^CharSequence (str content-description)))
+
+;; ### TextView property traits
+
+(deftrait :text-color
+  "Takes :text-color attribute, which should be an integer color value,
+  and sets it as the text color for the TextView."
+  [^TextView wdg, {:keys [text-color]} _]
+  (.setTextColor wdg (int text-color)))
+
+(deftrait :gravity
+  "Takes :gravity attribute, which should be a gravity constant keyword
+  or integer, and sets the gravity for the TextView."
+  [^TextView wdg, {:keys [gravity]} _]
+  (.setGravity wdg (int (kw/value :view gravity :gravity))))
+
+;; ### EditText property traits
+
+(deftrait :hint
+  "Sets widget's hint text to a string or a resource ID representing a string
+  resource provided to :hint attribute."
+  [^EditText wdg, {:keys [hint]} _]
+  (.setHint wdg ^CharSequence (res/get-string (.getContext wdg) hint)))
+
+(deftrait :input-type
+  "Takes :input-type attribute, which should be an integer input type constant
+  or a keyword (e.g. :number, :text, :phone), and sets it on the EditText."
+  [^EditText wdg, {:keys [input-type]} _]
+  (.setInputType wdg (int (kw/value :edit-text input-type))))
+
+;; ### CompoundButton traits
+
+(deftrait :checked
+  "Takes :checked attribute (boolean) and sets the checked state of the
+  CompoundButton."
+  [^CompoundButton wdg, {:keys [checked]} _]
+  (.setChecked wdg (boolean checked)))
+
+(deftrait :on-checked-change
+  "Takes :on-checked-change attribute, which should be a function of two
+  arguments (button-view, is-checked), and sets it as an
+  OnCheckedChangeListener for the CompoundButton."
+  [^CompoundButton wdg, {:keys [on-checked-change]} _]
+  (.setOnCheckedChangeListener
+   wdg (compound-button-listeners/on-checked-change-call on-checked-change)))
+
+;; ### AdapterView listener traits
+
+(deftrait :on-item-long-click
+  "Takes :on-item-long-click attribute, which should be a function of four
+  arguments (parent, view, position, id), and sets it as an
+  OnItemLongClickListener for the widget."
+  [^AdapterView wdg, {:keys [on-item-long-click]} _]
+  (.setOnItemLongClickListener
+   wdg (adapter-view/on-item-long-click-call on-item-long-click)))
+
+(deftrait :on-item-selected
+  "Takes :on-item-selected attribute, which should be a function of four
+  arguments (parent, view, position, id), and sets it as an
+  OnItemSelectedListener for the widget."
+  [^AdapterView wdg, {:keys [on-item-selected]} _]
+  (.setOnItemSelectedListener
+   wdg (adapter-view/on-item-selected-call on-item-selected)))
+
+;; ### ProgressBar / SeekBar / RatingBar traits
+
+(deftrait :progress
+  "Takes :progress and optionally :max attributes, and sets them on
+  the ProgressBar. :max defaults to 100 if not specified."
+  {:attributes [:progress :max]}
+  [^ProgressBar wdg, {:keys [progress max]} _]
+  (when max
+    (.setMax wdg (int max)))
+  (when progress
+    (.setProgress wdg (int progress))))
+
+(deftrait :on-seek-bar-change
+  "Takes :on-seek-bar-change attribute, which should be a function of three
+  arguments (seek-bar, progress, from-user), and sets it as an
+  OnSeekBarChangeListener for the SeekBar."
+  [^SeekBar wdg, {:keys [on-seek-bar-change]} _]
+  (.setOnSeekBarChangeListener
+   wdg (seek-bar-listeners/on-seek-bar-change-call on-seek-bar-change)))
+
+(deftrait :on-rating-bar-change
+  "Takes :on-rating-bar-change attribute, which should be a function of three
+  arguments (rating-bar, rating, from-user), and sets it as an
+  OnRatingBarChangeListener for the RatingBar."
+  [^RatingBar wdg, {:keys [on-rating-bar-change]} _]
+  (.setOnRatingBarChangeListener
+   wdg (rating-bar-listeners/on-rating-bar-change-call on-rating-bar-change)))
 

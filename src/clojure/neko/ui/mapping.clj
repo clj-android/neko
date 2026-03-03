@@ -6,7 +6,7 @@
   (:use [neko.internal :only [keyword->static-field reflect-field]])
   (:import [android.widget LinearLayout Button CheckBox EditText ListView
             SearchView ImageView ImageView$ScaleType RelativeLayout ScrollView
-            FrameLayout GridView]
+            FrameLayout GridView CompoundButton SeekBar RatingBar ProgressBar]
            android.view.inputmethod.EditorInfo
            [android.view View ViewGroup$LayoutParams Gravity]))
 
@@ -19,7 +19,12 @@
                     :on-touch :on-create-context-menu :on-key :on-focus-change
                     :default-layout-params :linear-layout-params
                     :relative-layout-params :listview-layout-params
-                    :frame-layout-params]
+                    :frame-layout-params
+                    :background-color :background :visibility :enabled
+                    :content-description]
+           :values {:visible View/VISIBLE
+                    :invisible View/INVISIBLE
+                    :gone View/GONE}
            :value-namespaces
            {:gravity android.view.Gravity
             :visibility android.view.View}}
@@ -29,7 +34,8 @@
              :inherits :text-view
              :attributes {:text "Default button"}}
     :check-box {:classname android.widget.CheckBox
-                :inherits :text-view}
+                :inherits :text-view
+                :traits [:checked :on-checked-change]}
     :linear-layout {:classname android.widget.LinearLayout
                     :inherits :view-group}
     :relative-layout {:classname android.widget.RelativeLayout
@@ -38,6 +44,7 @@
                    :inherits :view-group}
     :edit-text {:classname android.widget.EditText
                 :inherits :view
+                :traits [:hint :input-type]
                 :values {:number      EditorInfo/TYPE_CLASS_NUMBER
                          :datetime    EditorInfo/TYPE_CLASS_DATETIME
                          :text        EditorInfo/TYPE_CLASS_TEXT
@@ -51,15 +58,16 @@
                          :next        EditorInfo/IME_ACTION_NEXT}}
     :progress-bar {:classname android.widget.ProgressBar
                    :inherits  :view
+                   :traits [:progress]
                    :value-namespaces {:visibility android.view.View}}
     :text-view {:classname android.widget.TextView
                 :inherits :view
                 :value-namespaces
                 {:ellipsize android.text.TextUtils$TruncateAt}
-                :traits [:text :text-size :on-editor-action]}
+                :traits [:text :text-size :on-editor-action :text-color :gravity]}
     :list-view {:classname android.widget.ListView
                 :inherits :view-group
-                :traits [:on-item-click]}
+                :traits [:on-item-click :on-item-long-click :on-item-selected]}
     :search-view {:classname android.widget.SearchView
                   :inherits :view-group
                   :traits [:on-query-text]}
@@ -74,7 +82,13 @@
                   :inherits :view}
     :grid-view {:classname android.widget.GridView
                 :inherits :view-group
-                :traits [:on-item-click]}
+                :traits [:on-item-click :on-item-long-click]}
+    :seek-bar {:classname android.widget.SeekBar
+               :inherits :progress-bar
+               :traits [:on-seek-bar-change]}
+    :rating-bar {:classname android.widget.RatingBar
+                 :inherits :progress-bar
+                 :traits [:on-rating-bar-change]}
 
     ;; Other
     :layout-params {:classname ViewGroup$LayoutParams
@@ -102,7 +116,9 @@
     android.webkit.WebView :web-view
     android.widget.ScrollView :scroll-view
     android.widget.GridView :grid-view
-    android.widget.ProgressBar :progress-bar}))
+    android.widget.ProgressBar :progress-bar
+    android.widget.SeekBar :seek-bar
+    android.widget.RatingBar :rating-bar}))
 
 (defn set-classname!
   "Connects the given keyword to the classname."
