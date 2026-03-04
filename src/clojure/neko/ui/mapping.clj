@@ -21,7 +21,7 @@
                     :relative-layout-params :listview-layout-params
                     :frame-layout-params
                     :background-color :background :visibility :enabled
-                    :content-description]
+                    :content-description :alpha :min-height :min-width]
            :values {:visible View/VISIBLE
                     :invisible View/INVISIBLE
                     :gone View/GONE}
@@ -64,10 +64,12 @@
                 :inherits :view
                 :value-namespaces
                 {:ellipsize android.text.TextUtils$TruncateAt}
-                :traits [:text :text-size :on-editor-action :text-color :gravity]}
+                :traits [:text :text-size :on-editor-action :text-color :gravity
+                         :max-lines :single-line]}
     :list-view {:classname android.widget.ListView
                 :inherits :view-group
-                :traits [:on-item-click :on-item-long-click :on-item-selected]}
+                :traits [:on-item-click :on-item-long-click :on-item-selected
+                         :on-scroll]}
     :search-view {:classname android.widget.SearchView
                   :inherits :view-group
                   :traits [:on-query-text]}

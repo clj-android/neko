@@ -8,11 +8,12 @@
             [neko.listeners.compound-button :as compound-button-listeners]
             [neko.listeners.seek-bar :as seek-bar-listeners]
             [neko.listeners.rating-bar :as rating-bar-listeners]
+            [neko.listeners.abs-list-view :as abs-list-view-listeners]
             neko.listeners.search-view
             [neko.internal :refer [memoized int-id closest-android-ancestor]])
   (:import [android.widget LinearLayout$LayoutParams ListView TextView SearchView
             ImageView RelativeLayout RelativeLayout$LayoutParams AdapterView
-            AbsListView$LayoutParams FrameLayout$LayoutParams
+            AbsListView AbsListView$LayoutParams FrameLayout$LayoutParams
             CompoundButton EditText ProgressBar SeekBar RatingBar]
            [android.view View ViewGroup$LayoutParams
             ViewGroup$MarginLayoutParams]
@@ -601,4 +602,47 @@ next-level elements."
   [^RatingBar wdg, {:keys [on-rating-bar-change]} _]
   (.setOnRatingBarChangeListener
    wdg (rating-bar-listeners/on-rating-bar-change-call on-rating-bar-change)))
+
+;; ### View property traits (additional)
+
+(deftrait :alpha
+  "Takes :alpha attribute (float 0.0-1.0) and sets the view's opacity."
+  [^View wdg, {:keys [alpha]} _]
+  (.setAlpha wdg (float alpha)))
+
+(deftrait :min-height
+  "Takes :min-height attribute (integer, pixels or dimension vector) and sets
+  the view's minimum height."
+  [^View wdg, {:keys [min-height]} _]
+  (.setMinimumHeight wdg (int (to-dimension (.getContext wdg) min-height))))
+
+(deftrait :min-width
+  "Takes :min-width attribute (integer, pixels or dimension vector) and sets
+  the view's minimum width."
+  [^View wdg, {:keys [min-width]} _]
+  (.setMinimumWidth wdg (int (to-dimension (.getContext wdg) min-width))))
+
+;; ### TextView property traits (additional)
+
+(deftrait :max-lines
+  "Takes :max-lines attribute (integer) and sets the maximum number of lines
+  for the TextView."
+  [^TextView wdg, {:keys [max-lines]} _]
+  (.setMaxLines wdg (int max-lines)))
+
+(deftrait :single-line
+  "Takes :single-line attribute (boolean) and sets whether the TextView is
+  single-line."
+  [^TextView wdg, {:keys [single-line]} _]
+  (.setSingleLine wdg (boolean single-line)))
+
+;; ### AbsListView listener traits
+
+(deftrait :on-scroll
+  "Takes :on-scroll attribute, which should be a function of four arguments
+  (view, first-visible-item, visible-item-count, total-item-count), and sets
+  it as an OnScrollListener for the AbsListView."
+  [^AbsListView wdg, {:keys [on-scroll]} _]
+  (.setOnScrollListener
+   wdg (abs-list-view-listeners/on-scroll-call on-scroll)))
 
