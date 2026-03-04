@@ -134,6 +134,6 @@
   (loop [c c]
     (when c
       (if-let [cand-name
-               (re-find #"^class (android\..*)" (str c))]
+               (re-find #"^class ((?:android|androidx|com\.google\.android\.material)\..*)" (str c))]
         (Class/forName (second cand-name))
         (recur (.getSuperclass c))))))

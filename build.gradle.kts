@@ -35,6 +35,17 @@ android {
 dependencies {
     // Clojure runtime — compileOnly because the app provides it
     compileOnly("org.clojure:clojure:1.12.0")
+
+    // AndroidX support library widgets — compileOnly because the app provides them
+    compileOnly("androidx.recyclerview:recyclerview:1.3.2")
+    compileOnly("androidx.cardview:cardview:1.0.0")
+    compileOnly("androidx.appcompat:appcompat:1.7.0")
+    compileOnly("androidx.drawerlayout:drawerlayout:1.2.0")
+    compileOnly("androidx.viewpager:viewpager:1.0.0")
+    compileOnly("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    compileOnly("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
+    compileOnly("androidx.core:core:1.13.1")
+    compileOnly("com.google.android.material:material:1.12.0")
 }
 
 // When consumed via includeBuild(), raw project configurations are exposed

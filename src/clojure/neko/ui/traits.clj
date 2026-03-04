@@ -191,7 +191,7 @@ next-level elements."
                                   :layout-margin-left :layout-margin-top
                                   :layout-margin-right :layout-margin-bottom])
 
-(defn- apply-margins-to-layout-params
+(defn apply-margins-to-layout-params
   "Takes a LayoutParams object that implements MarginLayoutParams
   class and an attribute map, and sets margins for this object."
   [context, ^ViewGroup$MarginLayoutParams params, attribute-map]
