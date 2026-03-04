@@ -3,9 +3,41 @@
   (:require [neko.ui.mapping :as kw]
             [neko.ui.traits :refer [apply-trait]]
             [neko.internal :refer [keyword->setter reflect-setter
-                                 reflect-constructor]])
+                                 reflect-constructor]]
+            [neko.threading :refer [on-ui]])
   (:import android.content.res.Configuration
-           neko.App))
+           neko.App
+           java.lang.ref.WeakReference))
+
+;; ## Reactive cell detection (optional, activated when neko.reactive is loaded)
+
+(defonce ^:private cell-class-cache (atom nil))
+
+(defn- cell-class
+  "Returns the neko.reactive.Cell class if loaded, nil otherwise."
+  []
+  (or @cell-class-cache
+      (try
+        (let [c (Class/forName "neko.reactive.Cell")]
+          (reset! cell-class-cache c)
+          c)
+        (catch ClassNotFoundException _ nil))))
+
+(defn- extract-cells
+  "If cell-cls is non-nil, scans attributes for reactive cell values.
+  Returns [resolved-attrs bindings] where resolved-attrs has cells
+  replaced with their current (derefed) values, and bindings is a
+  vector of [attr-key cell] pairs for watch setup."
+  [attributes cell-cls]
+  (if cell-cls
+    (reduce-kv
+      (fn [[attrs binds] k v]
+        (if (instance? cell-cls v)
+          [(assoc attrs k @v) (conj binds [k v])]
+          [attrs binds]))
+      [attributes []]
+      attributes)
+    [attributes nil]))
 
 ;; ## Attributes
 
@@ -44,6 +76,8 @@
         (apply-default-setters-from-attributes widget-kw widget attrs)
         new-opts))))
 
+(declare config)
+
 ;; ## Widget creation
 
 (defn construct-element
@@ -59,7 +93,8 @@
 (defn make-ui-element
   "Creates a UI widget based on its keyword name, applies attributes
   to it, then recursively create its subelements and add them to the
-  widget."
+  widget. Reactive cells in attribute values are automatically detected
+  and bound — the widget updates when the cell changes."
   [context tree options]
   (if (sequential? tree)
     (let [[widget-kw attributes & inside-elements] tree
@@ -69,13 +104,19 @@
                 (apply constr context (:constructor-args attributes))
                 (construct-element widget-kw context
                                    (:constructor-args attributes)))
-          new-opts (apply-attributes
-                    widget-kw wdg
-                    ;; Remove :custom-constructor and
-                    ;; :constructor-args since they are not real
-                    ;; attributes.
-                    (dissoc attributes :constructor-args :custom-constructor)
-                    options)]
+          cleaned-attrs (dissoc attributes :constructor-args :custom-constructor)
+          [resolved-attrs bindings] (extract-cells cleaned-attrs (cell-class))
+          new-opts (apply-attributes widget-kw wdg resolved-attrs options)]
+      (when (seq bindings)
+        (let [wdg-weak (WeakReference. wdg)]
+          (doseq [[attr c] bindings]
+            (let [wkey [::reactive (System/identityHashCode wdg) attr]]
+              (add-watch c wkey
+                (fn [_ _ old-val new-val]
+                  (if-let [w (.get wdg-weak)]
+                    (when (not= old-val new-val)
+                      (on-ui (config w attr new-val)))
+                    (remove-watch c wkey))))))))
       (doseq [element inside-elements :when element]
         (.addView ^android.view.ViewGroup wdg
                   (make-ui-element context element new-opts)))
