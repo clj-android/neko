@@ -3,8 +3,13 @@
   (:require [neko.debug :refer [safe-for-ui]]
             [neko.data.sqlite :refer [entity-from-cursor]]
             [neko.threading :refer [on-ui]]
-            [neko.ui :refer [make-ui-element]])
+            [neko.ui :refer [make-ui-element]]
+            [neko.ui.mapping :as kw]
+            [neko.ui.traits :refer [deftrait]])
   (:import android.view.View
+           [android.view ViewGroup]
+           android.widget.FrameLayout
+           android.widget.FrameLayout$LayoutParams
            neko.data.sqlite.TaggedCursor
            [neko.ui.adapters InterchangeableListAdapter TaggedCursorAdapter]))
 
@@ -83,3 +88,41 @@
    (.updateCursor cursor-adapter))
   ([^TaggedCursorAdapter cursor-adapter new-cursor]
    (.updateCursor cursor-adapter new-cursor)))
+
+;; ## Declarative :items/:item-view trait for ListView
+
+(deftrait :list-items
+  "Takes :items (an atom/ref of a collection) and :item-view (a function
+  of two arguments: data-item and position, returning a UI tree vector).
+  Creates a ref-adapter internally and sets it on the ListView.
+
+  Example:
+
+    [:list-view {:items my-data-atom
+                 :item-view (fn [data pos]
+                              [:text-view {:text (:name data)
+                                           :text-size [16 :sp]}])}]
+
+  If :items is a plain collection (not an atom), it is wrapped in an atom
+  but will not auto-update."
+  {:attributes [:items :item-view]}
+  [wdg, {:keys [items item-view]} _]
+  (let [ref (if (instance? clojure.lang.IDeref items) items (atom items))
+        adapter (ref-adapter
+                 ;; create-view-fn: a FrameLayout wrapper for re-inflation
+                 (fn [context]
+                   (let [fl (FrameLayout. context)]
+                     (.setLayoutParams fl (FrameLayout$LayoutParams.
+                                          ViewGroup$LayoutParams/MATCH_PARENT
+                                          ViewGroup$LayoutParams/WRAP_CONTENT))
+                     fl))
+                 ;; update-view-fn: clear wrapper, inflate item tree
+                 (fn [pos view _parent data]
+                   (let [^FrameLayout fl view
+                         ctx (.getContext fl)]
+                     (.removeAllViews fl)
+                     (.addView fl (make-ui-element ctx (item-view data pos) {}))))
+                 ref)]
+    (.setAdapter ^android.widget.ListView wdg adapter)))
+
+(kw/add-trait! :list-view :list-items)

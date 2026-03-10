@@ -64,7 +64,7 @@ public class InterchangeableListAdapter extends BaseAdapter {
 
     public void setData(List newData) {
         data = newData;
-        notifyDataSetInvalidated();
+        notifyDataSetChanged();
     }
 
 }

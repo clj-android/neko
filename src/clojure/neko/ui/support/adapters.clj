@@ -3,9 +3,14 @@
   as `neko.ui.adapters/ref-adapter`."
   (:require [neko.debug :refer [safe-for-ui]]
             [neko.threading :refer [on-ui]]
-            [neko.ui :refer [make-ui-element]])
+            [neko.ui :refer [make-ui-element]]
+            [neko.ui.mapping :as kw]
+            [neko.ui.traits :refer [deftrait]])
   (:import android.view.View
            android.view.ViewGroup
+           android.view.ViewGroup$LayoutParams
+           android.widget.FrameLayout
+           android.widget.FrameLayout$LayoutParams
            [neko.ui.adapters ClojureRecyclerAdapter]))
 
 (defn recycler-adapter
@@ -48,3 +53,42 @@
                (fn [_ __ ___ new-state]
                  (on-ui (.setData adapter (access-fn new-state)))))
     adapter))
+
+;; ## Declarative :items/:item-view trait for RecyclerView
+
+(deftrait :recycler-items
+  "Takes :items (an atom/ref of a collection) and :item-view (a function
+  of two arguments: data-item and position, returning a UI tree vector).
+  Creates a recycler-adapter internally and sets it on the RecyclerView.
+
+  Example:
+
+    [:recycler-view {:layout-manager :linear
+                     :items my-data-atom
+                     :item-view (fn [data pos]
+                                  [:text-view {:text data
+                                               :text-size [16 :sp]}])}]
+
+  If :items is a plain collection (not an atom), it is wrapped in an atom
+  but will not auto-update."
+  {:attributes [:items :item-view]}
+  [wdg, {:keys [items item-view]} _]
+  (let [ref (if (instance? clojure.lang.IDeref items) items (atom items))
+        adapter (recycler-adapter
+                 ;; create-view-fn: a FrameLayout wrapper for re-inflation
+                 (fn [^ViewGroup parent _view-type]
+                   (let [fl (FrameLayout. (.getContext parent))]
+                     (.setLayoutParams fl (FrameLayout$LayoutParams.
+                                          ViewGroup$LayoutParams/MATCH_PARENT
+                                          ViewGroup$LayoutParams/WRAP_CONTENT))
+                     fl))
+                 ;; bind-view-fn: clear wrapper, inflate item tree
+                 (fn [view position data]
+                   (let [^FrameLayout fl view
+                         ctx (.getContext fl)]
+                     (.removeAllViews fl)
+                     (.addView fl (make-ui-element ctx (item-view data position) {}))))
+                 ref)]
+    (.setAdapter ^androidx.recyclerview.widget.RecyclerView wdg adapter)))
+
+(kw/add-trait! :recycler-view :recycler-items)
