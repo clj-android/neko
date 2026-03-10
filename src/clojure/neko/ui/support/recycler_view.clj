@@ -5,7 +5,8 @@
   (:require [neko.ui.mapping :as kw]
             [neko.ui.traits :refer [deftrait]]
             [neko.listeners.recycler-view :as rv-listeners])
-  (:import [androidx.recyclerview.widget RecyclerView LinearLayoutManager
+  (:import [androidx.recyclerview.widget RecyclerView RecyclerView$LayoutManager
+            RecyclerView$Adapter LinearLayoutManager
             GridLayoutManager StaggeredGridLayoutManager]))
 
 (kw/defelement :recycler-view
