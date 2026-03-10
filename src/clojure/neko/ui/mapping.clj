@@ -51,6 +51,12 @@
                          :datetime    EditorInfo/TYPE_CLASS_DATETIME
                          :text        EditorInfo/TYPE_CLASS_TEXT
                          :phone       EditorInfo/TYPE_CLASS_PHONE
+                         :email       (bit-or EditorInfo/TYPE_CLASS_TEXT
+                                              EditorInfo/TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+                         :password    (bit-or EditorInfo/TYPE_CLASS_TEXT
+                                              EditorInfo/TYPE_TEXT_VARIATION_PASSWORD)
+                         :uri         (bit-or EditorInfo/TYPE_CLASS_TEXT
+                                              EditorInfo/TYPE_TEXT_VARIATION_URI)
                          :go          EditorInfo/IME_ACTION_GO
                          :done        EditorInfo/IME_ACTION_DONE
                          :unspecified EditorInfo/IME_ACTION_UNSPECIFIED

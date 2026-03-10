@@ -489,7 +489,7 @@ next-level elements."
 
 ;; ### View property traits
 
-(defn- coerce-color
+(defn coerce-color
   "Coerces a color value to an int. Accepts integers/longs (including
   hex literals with high bits like 0xFF334455), and strings like
   \"#RRGGBB\" or \"#AARRGGBB\"."

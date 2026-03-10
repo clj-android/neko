@@ -3,7 +3,7 @@
 
   Requires `androidx.cardview:cardview` on the classpath."
   (:require [neko.ui.mapping :as kw]
-            [neko.ui.traits :refer [deftrait to-dimension]])
+            [neko.ui.traits :refer [deftrait to-dimension coerce-color]])
   (:import [androidx.cardview.widget CardView]))
 
 (kw/defelement :card-view
@@ -27,4 +27,4 @@
   "Takes :card-background-color attribute (integer color value) and sets the
   CardView's background color."
   [^CardView wdg, {:keys [card-background-color]} _]
-  (.setCardBackgroundColor wdg (int card-background-color)))
+  (.setCardBackgroundColor wdg (int (coerce-color card-background-color))))

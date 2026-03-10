@@ -111,9 +111,10 @@
 
 (defn reflect-field
   "Returns a field value for the given UI object class and the name of
-  the field."
+  the field.  Uses getField so inherited public fields (e.g.
+  LinearLayout.VERTICAL on RadioGroup) are found."
   [^Class widget-type, ^String field-name]
-  (.get ^Field (.getDeclaredField widget-type field-name) nil))
+  (.get ^Field (.getField widget-type field-name) nil))
 
 (defn list-all-methods
   "Returns names of all non-private methods of a class, including methods
