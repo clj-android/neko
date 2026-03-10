@@ -19,7 +19,7 @@
   [progress-fn & [start-fn stop-fn]]
   (reify android.widget.SeekBar$OnSeekBarChangeListener
     (onProgressChanged [this seek-bar progress from-user]
-      (safe-for-ui (progress-fn seek-bar progress from-user)))
+      (safe-for-ui (when progress-fn (progress-fn seek-bar progress from-user))))
     (onStartTrackingTouch [this seek-bar]
       (safe-for-ui (when start-fn (start-fn seek-bar))))
     (onStopTrackingTouch [this seek-bar]

@@ -22,7 +22,7 @@
   [opened-fn & [closed-fn slide-fn state-changed-fn]]
   (reify androidx.drawerlayout.widget.DrawerLayout$DrawerListener
     (onDrawerOpened [this drawer-view]
-      (safe-for-ui (opened-fn drawer-view)))
+      (safe-for-ui (when opened-fn (opened-fn drawer-view))))
     (onDrawerClosed [this drawer-view]
       (safe-for-ui (when closed-fn (closed-fn drawer-view))))
     (onDrawerSlide [this drawer-view slide-offset]

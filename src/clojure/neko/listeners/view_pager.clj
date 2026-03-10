@@ -20,7 +20,7 @@
   [page-selected-fn & [page-scrolled-fn scroll-state-fn]]
   (reify androidx.viewpager.widget.ViewPager$OnPageChangeListener
     (onPageSelected [this position]
-      (safe-for-ui (page-selected-fn position)))
+      (safe-for-ui (when page-selected-fn (page-selected-fn position))))
     (onPageScrolled [this position offset offset-pixels]
       (safe-for-ui (when page-scrolled-fn
                      (page-scrolled-fn position offset offset-pixels))))

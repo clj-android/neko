@@ -13,7 +13,13 @@
   :traits [:on-drawer-opened])
 
 (deftrait :on-drawer-opened
-  "Takes :on-drawer-opened attribute, which should be a function of one
-  argument (drawer-view), and adds it as the DrawerLayout's DrawerListener."
-  [^DrawerLayout wdg, {:keys [on-drawer-opened]} _]
-  (.addDrawerListener wdg (drawer-listeners/on-drawer-call on-drawer-opened)))
+  "Takes :on-drawer-opened (fn [drawer-view]), :on-drawer-closed (fn [drawer-view]),
+  :on-drawer-slide (fn [drawer-view offset]), and/or :on-drawer-state-changed
+  (fn [new-state]) attributes and adds a DrawerListener to the DrawerLayout."
+  {:attributes [:on-drawer-opened :on-drawer-closed
+                :on-drawer-slide :on-drawer-state-changed]}
+  [^DrawerLayout wdg, {:keys [on-drawer-opened on-drawer-closed
+                               on-drawer-slide on-drawer-state-changed]} _]
+  (.addDrawerListener wdg (drawer-listeners/on-drawer-call
+                           on-drawer-opened on-drawer-closed
+                           on-drawer-slide on-drawer-state-changed)))

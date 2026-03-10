@@ -440,6 +440,13 @@ next-level elements."
   [^TextView wdg, {:keys [on-editor-action]} _]
   (.setOnEditorActionListener wdg (text-view-listeners/on-editor-action-call on-editor-action)))
 
+(deftrait :on-text-change
+  "Takes :on-text-change attribute, which should be a function of one
+  argument (the current text as a string), and adds a TextWatcher to the
+  EditText that calls it after each change."
+  [^EditText wdg, {:keys [on-text-change]} _]
+  (.addTextChangedListener wdg (text-view-listeners/on-text-change-call on-text-change)))
+
 ;; ### ID storing traits
 
 (deftrait :id-holder
@@ -482,11 +489,22 @@ next-level elements."
 
 ;; ### View property traits
 
+(defn- coerce-color
+  "Coerces a color value to an int. Accepts integers/longs (including
+  hex literals with high bits like 0xFF334455), and strings like
+  \"#RRGGBB\" or \"#AARRGGBB\"."
+  [color]
+  (cond
+    (string? color) (Color/parseColor color)
+    (number? color) (unchecked-int color)
+    :else (int color)))
+
 (deftrait :background-color
-  "Takes :background-color attribute, which should be an integer color value,
-  and sets it as the background color for the view."
+  "Takes :background-color attribute, which should be an integer color value
+  (e.g. 0xFF334455) or a string (e.g. \"#334455\"), and sets it as the
+  background color for the view."
   [^View wdg, {:keys [background-color]} _]
-  (.setBackgroundColor wdg (int background-color)))
+  (.setBackgroundColor wdg (coerce-color background-color)))
 
 (deftrait :background
   "Takes :background attribute, which can be a Drawable or an integer color
@@ -494,7 +512,7 @@ next-level elements."
   [^View wdg, {:keys [background]} _]
   (condp instance? background
     Drawable (.setBackgroundDrawable wdg ^Drawable background)
-    (.setBackgroundColor wdg (int background))))
+    (.setBackgroundColor wdg (coerce-color background))))
 
 (deftrait :visibility
   "Takes :visibility attribute, which should be one of :visible, :invisible,
@@ -516,10 +534,11 @@ next-level elements."
 ;; ### TextView property traits
 
 (deftrait :text-color
-  "Takes :text-color attribute, which should be an integer color value,
-  and sets it as the text color for the TextView."
+  "Takes :text-color attribute, which should be an integer color value
+  (e.g. 0xFF334455) or a string (e.g. \"#334455\"), and sets it as the
+  text color for the TextView."
   [^TextView wdg, {:keys [text-color]} _]
-  (.setTextColor wdg (int text-color)))
+  (.setTextColor wdg (coerce-color text-color)))
 
 (deftrait :gravity
   "Takes :gravity attribute, which should be a gravity constant keyword
@@ -588,12 +607,14 @@ next-level elements."
     (.setProgress wdg (int progress))))
 
 (deftrait :on-seek-bar-change
-  "Takes :on-seek-bar-change attribute, which should be a function of three
-  arguments (seek-bar, progress, from-user), and sets it as an
-  OnSeekBarChangeListener for the SeekBar."
-  [^SeekBar wdg, {:keys [on-seek-bar-change]} _]
+  "Takes :on-seek-bar-change (fn [seek-bar progress from-user]),
+  :on-seek-bar-start (fn [seek-bar]), and/or :on-seek-bar-stop (fn [seek-bar])
+  attributes and sets them as an OnSeekBarChangeListener for the SeekBar."
+  {:attributes [:on-seek-bar-change :on-seek-bar-start :on-seek-bar-stop]}
+  [^SeekBar wdg, {:keys [on-seek-bar-change on-seek-bar-start on-seek-bar-stop]} _]
   (.setOnSeekBarChangeListener
-   wdg (seek-bar-listeners/on-seek-bar-change-call on-seek-bar-change)))
+   wdg (seek-bar-listeners/on-seek-bar-change-call
+        on-seek-bar-change on-seek-bar-start on-seek-bar-stop)))
 
 (deftrait :on-rating-bar-change
   "Takes :on-rating-bar-change attribute, which should be a function of three

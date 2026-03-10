@@ -13,7 +13,12 @@
   :traits [:on-page-change])
 
 (deftrait :on-page-change
-  "Takes :on-page-change attribute, which should be a function of one argument
-  (position), and adds it as the ViewPager's OnPageChangeListener."
-  [^ViewPager wdg, {:keys [on-page-change]} _]
-  (.addOnPageChangeListener wdg (pager-listeners/on-page-change-call on-page-change)))
+  "Takes :on-page-change (fn [position]), :on-page-scrolled
+  (fn [position offset offset-pixels]), and/or :on-page-scroll-state-changed
+  (fn [state]) attributes and adds an OnPageChangeListener to the ViewPager."
+  {:attributes [:on-page-change :on-page-scrolled :on-page-scroll-state-changed]}
+  [^ViewPager wdg, {:keys [on-page-change on-page-scrolled
+                            on-page-scroll-state-changed]} _]
+  (.addOnPageChangeListener wdg (pager-listeners/on-page-change-call
+                                 on-page-change on-page-scrolled
+                                 on-page-scroll-state-changed)))

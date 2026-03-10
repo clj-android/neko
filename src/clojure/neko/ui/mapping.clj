@@ -6,7 +6,9 @@
   (:use [neko.internal :only [keyword->static-field reflect-field]])
   (:import [android.widget LinearLayout Button CheckBox EditText ListView
             SearchView ImageView ImageView$ScaleType RelativeLayout ScrollView
-            FrameLayout GridView CompoundButton SeekBar RatingBar ProgressBar]
+            FrameLayout GridView CompoundButton SeekBar RatingBar ProgressBar
+            Spinner Switch ToggleButton RadioButton RadioGroup
+            HorizontalScrollView]
            android.view.inputmethod.EditorInfo
            [android.view View ViewGroup$LayoutParams Gravity]))
 
@@ -44,7 +46,7 @@
                    :inherits :view-group}
     :edit-text {:classname android.widget.EditText
                 :inherits :view
-                :traits [:hint :input-type]
+                :traits [:hint :input-type :on-text-change]
                 :values {:number      EditorInfo/TYPE_CLASS_NUMBER
                          :datetime    EditorInfo/TYPE_CLASS_DATETIME
                          :text        EditorInfo/TYPE_CLASS_TEXT
@@ -91,6 +93,22 @@
     :rating-bar {:classname android.widget.RatingBar
                  :inherits :progress-bar
                  :traits [:on-rating-bar-change]}
+    :spinner {:classname android.widget.Spinner
+              :inherits :view-group
+              :traits [:on-item-selected]}
+    :switch {:classname android.widget.Switch
+             :inherits :text-view
+             :traits [:checked :on-checked-change]}
+    :toggle-button {:classname android.widget.ToggleButton
+                    :inherits :text-view
+                    :traits [:checked :on-checked-change]}
+    :radio-button {:classname android.widget.RadioButton
+                   :inherits :text-view
+                   :traits [:checked :on-checked-change]}
+    :radio-group {:classname android.widget.RadioGroup
+                  :inherits :linear-layout}
+    :horizontal-scroll-view {:classname android.widget.HorizontalScrollView
+                             :inherits :view}
 
     ;; Other
     :layout-params {:classname ViewGroup$LayoutParams
@@ -120,7 +138,13 @@
     android.widget.GridView :grid-view
     android.widget.ProgressBar :progress-bar
     android.widget.SeekBar :seek-bar
-    android.widget.RatingBar :rating-bar}))
+    android.widget.RatingBar :rating-bar
+    android.widget.Spinner :spinner
+    android.widget.Switch :switch
+    android.widget.ToggleButton :toggle-button
+    android.widget.RadioButton :radio-button
+    android.widget.RadioGroup :radio-group
+    android.widget.HorizontalScrollView :horizontal-scroll-view}))
 
 (defn set-classname!
   "Connects the given keyword to the classname."

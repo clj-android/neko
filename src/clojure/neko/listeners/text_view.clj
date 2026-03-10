@@ -53,3 +53,14 @@
   action, otherwise logical false."
   [& body]
   `(on-editor-action-call (fn [~'view ~'action-id ~'key-event] ~@body)))
+
+(defn on-text-change-call
+  "Takes a function and yields a TextWatcher that will invoke it in
+  afterTextChanged.  The function takes one argument: the current text
+  as a string."
+  [handler-fn]
+  (reify android.text.TextWatcher
+    (beforeTextChanged [this s start count after])
+    (onTextChanged [this s start before count])
+    (afterTextChanged [this editable]
+      (safe-for-ui (handler-fn (.toString editable))))))
