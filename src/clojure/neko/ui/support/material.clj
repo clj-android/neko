@@ -9,14 +9,16 @@
             [neko.listeners.view :as view-listeners])
   (:import [com.google.android.material.appbar AppBarLayout]
            [com.google.android.material.floatingactionbutton FloatingActionButton]
-           [com.google.android.material.tabs TabLayout]))
+           [com.google.android.material.tabs TabLayout TabLayout$Tab]
+           [android.view View]
+           [java.util HashMap]))
 
 ;; Widget registrations
 
 (kw/defelement :tab-layout
   :classname TabLayout
   :inherits :view-group
-  :traits [:on-tab-selected :tab-mode :tab-gravity :tabs])
+  :traits [:on-tab-selected :tab-mode :tab-gravity :tabs :tab-content])
 
 (kw/defelement :floating-action-button
   :classname FloatingActionButton
@@ -68,6 +70,48 @@
       (when-let [cd (:content-description spec)]
         (.setContentDescription tab ^CharSequence cd))
       (.addTab wdg tab))))
+
+(deftrait :tab-content
+  "Takes :tab-content attribute, a flat vector of [label id label id ...]
+  pairs mapping tab labels to sibling content view IDs. Creates tabs and
+  auto-wires visibility switching: the selected tab's content view is
+  shown (VISIBLE), all others are hidden (GONE).
+
+  Content views are resolved from the nearest :id-holder ancestor after
+  the full UI tree is built. Do not combine with :tabs (use one or the
+  other). Can be combined with :on-tab-selected for additional behavior.
+
+  Example:
+
+    [:tab-layout {:tab-content [\"Widgets\" ::widgets-panel
+                                \"REPL\"    ::repl-panel]
+                  :tab-mode :fixed}]"
+  [^TabLayout wdg, {:keys [tab-content]} {:keys [^View id-holder]}]
+  (let [pairs (partition 2 tab-content)]
+    ;; Create the tabs
+    (doseq [[label _] pairs]
+      (.addTab wdg (doto (.newTab wdg) (.setText ^CharSequence (str label)))))
+    ;; Defer view resolution until the full UI tree is built.
+    ;; During make-ui, sibling views don't exist yet when this trait runs.
+    (.post wdg
+      (fn []
+        (when id-holder
+          (let [tag ^HashMap (.getTag id-holder)
+                views (mapv (fn [[_ id]] (.get tag id)) pairs)]
+            ;; Set initial visibility: first panel shown, rest hidden
+            (dotimes [i (count views)]
+              (when-let [^View v (nth views i)]
+                (.setVisibility v (if (zero? i) View/VISIBLE View/GONE))))
+            ;; Wire up tab switching
+            (.addOnTabSelectedListener wdg
+              (tab-listeners/on-tab-selected-call
+                (fn [tab]
+                  (let [pos (.getPosition ^TabLayout$Tab tab)]
+                    (dotimes [i (count views)]
+                      (when-let [^View v (nth views i)]
+                        (.setVisibility v (if (= i pos)
+                                            View/VISIBLE
+                                            View/GONE))))))))))))))
 
 ;; FloatingActionButton traits
 
