@@ -455,13 +455,21 @@ next-level elements."
   by their IDs as keys in a map, which is accessible by calling
   `.getTag` on the holder widget.
 
+  When the id-holder itself also carries an `:id`, the widget is
+  self-registered in the map so `find-view` can locate it.
+
   Example:
 
   (def foo (make-ui [:linear-layout {:id-holder true}
                      [:button {:id ::abutton}]]))
   (::abutton (.getTag foo)) => internal Button widget."
-  [^View wdg, _ __]
-  (.setTag wdg (HashMap.))
+  [^View wdg, {:keys [id]} __]
+  (let [m (HashMap.)]
+    ;; Self-register: the :id trait runs later but won't see this
+    ;; id-holder in its options (apply-attributes passes the original
+    ;; options to each trait, not the accumulated ones).
+    (when id (.put m id wdg))
+    (.setTag wdg m))
   {:options-fn #(assoc % :id-holder wdg)})
 
 (deftrait :id
