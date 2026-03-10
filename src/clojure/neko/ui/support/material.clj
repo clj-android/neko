@@ -16,7 +16,7 @@
 (kw/defelement :tab-layout
   :classname TabLayout
   :inherits :view-group
-  :traits [:on-tab-selected :tab-mode :tab-gravity])
+  :traits [:on-tab-selected :tab-mode :tab-gravity :tabs])
 
 (kw/defelement :floating-action-button
   :classname FloatingActionButton
@@ -50,6 +50,24 @@
   (.setTabGravity wdg (int (case tab-gravity
                              :fill   TabLayout/GRAVITY_FILL
                              :center TabLayout/GRAVITY_CENTER))))
+
+(deftrait :tabs
+  "Takes :tabs attribute, a vector of tab specifications. Each entry can be:
+  - a string (shorthand for {:text \"label\"})
+  - a map with keys :text, :icon, :content-description
+  Creates and adds tabs to the TabLayout in order."
+  [^TabLayout wdg, {:keys [tabs]} _]
+  (doseq [tab-spec tabs]
+    (let [tab (.newTab wdg)
+          spec (if (string? tab-spec) {:text tab-spec} tab-spec)]
+      (when-let [t (:text spec)] (.setText tab ^CharSequence t))
+      (when-let [i (:icon spec)]
+        (if (integer? i)
+          (.setIcon tab (int i))
+          (.setIcon tab i)))
+      (when-let [cd (:content-description spec)]
+        (.setContentDescription tab ^CharSequence cd))
+      (.addTab wdg tab))))
 
 ;; FloatingActionButton traits
 
