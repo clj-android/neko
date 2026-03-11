@@ -94,7 +94,12 @@
   "Creates a UI widget based on its keyword name, applies attributes
   to it, then recursively create its subelements and add them to the
   widget. Reactive cells in attribute values are automatically detected
-  and bound — the widget updates when the cell changes."
+  and bound — the widget updates when the cell changes.
+
+  The special `:on-create` attribute takes a function of one argument
+  (the widget) and is called after all traits and children are applied.
+  Use it for imperative initialization that depends on the fully
+  constructed widget or its children."
   [context tree options]
   (if (sequential? tree)
     (let [[widget-kw attributes & inside-elements] tree
@@ -104,7 +109,8 @@
                 (apply constr context (:constructor-args attributes))
                 (construct-element widget-kw context
                                    (:constructor-args attributes)))
-          cleaned-attrs (dissoc attributes :constructor-args :custom-constructor)
+          init-fn (:on-create attributes)
+          cleaned-attrs (dissoc attributes :constructor-args :custom-constructor :on-create)
           [resolved-attrs bindings] (extract-cells cleaned-attrs (cell-class))
           new-opts (apply-attributes widget-kw wdg resolved-attrs options)]
       (when (seq bindings)
@@ -120,6 +126,7 @@
       (doseq [element inside-elements :when element]
         (.addView ^android.view.ViewGroup wdg
                   (make-ui-element context element new-opts)))
+      (when init-fn (init-fn wdg))
       wdg)
     tree))
 
