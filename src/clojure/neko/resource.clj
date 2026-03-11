@@ -87,7 +87,9 @@
                   :color-error-container        (mat "colorErrorContainer")
                   :color-on-error-container     (mat "colorOnErrorContainer")
                   :color-background             android.R$attr/colorBackground
-                  :color-on-background          (mat "colorOnBackground")})))))
+                  :color-on-background          (mat "colorOnBackground")
+                  :text-color-secondary         android.R$attr/textColorSecondary
+                  :text-color-hint              android.R$attr/textColorHint})))))
 
 (defn get-theme-color
   "Resolves a color from the current Activity/Context theme.
@@ -115,7 +117,7 @@
                                   (get @theme-color-attrs attr)
                                   attr)]
     (when attr-id
-      (let [tv (TypedValue.)]
-        (if (.resolveAttribute (.getTheme context) attr-id tv true)
-          (.data tv)
-          default-color)))))
+      (let [ta (.obtainStyledAttributes (.getTheme context) (int-array [attr-id]))]
+        (try
+          (.getColor ta 0 default-color)
+          (finally (.recycle ta)))))))
