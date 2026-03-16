@@ -562,8 +562,8 @@ next-level elements."
 
   Underlines the text, sets the color to ?attr/colorPrimary (falls back
   to 0xFF1A0DAB), and opens the URL in a browser on click."
-  [^TextView wdg, {:keys [link text]} _]
-  (let [url (if (true? link) (str text) (str link))]
+  [^TextView wdg, {:keys [link]} _]
+  (let [url (if (true? link) (str (.getText wdg)) (str link))]
     (.setPaintFlags wdg (bit-or (.getPaintFlags wdg) Paint/UNDERLINE_TEXT_FLAG))
     (let [color (try
                   (res/get-theme-color (.getContext wdg) :color-primary)
