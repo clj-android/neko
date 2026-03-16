@@ -73,7 +73,7 @@
                 :value-namespaces
                 {:ellipsize android.text.TextUtils$TruncateAt}
                 :traits [:text :text-size :on-editor-action :text-color :gravity
-                         :max-lines :single-line]}
+                         :max-lines :single-line :link :text-style]}
     :list-view {:classname android.widget.ListView
                 :inherits :view-group
                 :traits [:on-item-click :on-item-long-click :on-item-selected

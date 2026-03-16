@@ -18,10 +18,10 @@
            [android.view View ViewGroup$LayoutParams
             ViewGroup$MarginLayoutParams]
            android.graphics.Bitmap android.graphics.drawable.Drawable
-           android.graphics.Color
+           android.graphics.Color android.graphics.Paint android.graphics.Typeface
            android.net.Uri
            android.util.TypedValue
-           android.content.Context
+           android.content.Context android.content.Intent
            java.util.HashMap
            clojure.lang.Keyword))
 
@@ -553,6 +553,48 @@ next-level elements."
   or integer, and sets the gravity for the TextView."
   [^TextView wdg, {:keys [gravity]} _]
   (.setGravity wdg (int (kw/value :view gravity :gravity))))
+
+(deftrait :link
+  "Makes a TextView look and behave like a hyperlink.
+
+  `:link true` uses the widget's text as the URL.
+  `:link \"https://...\"` uses the given string as the URL.
+
+  Underlines the text, sets the color to ?attr/colorPrimary (falls back
+  to 0xFF1A0DAB), and opens the URL in a browser on click."
+  [^TextView wdg, {:keys [link text]} _]
+  (let [url (if (true? link) (str text) (str link))]
+    (.setPaintFlags wdg (bit-or (.getPaintFlags wdg) Paint/UNDERLINE_TEXT_FLAG))
+    (let [color (try
+                  (res/get-theme-color (.getContext wdg) :color-primary)
+                  (catch Exception _ (unchecked-int 0xFF1A0DAB)))]
+      (.setTextColor wdg (int color)))
+    (.setOnClickListener wdg
+      (reify android.view.View$OnClickListener
+        (onClick [_ v]
+          (let [intent (Intent. Intent/ACTION_VIEW (Uri/parse url))]
+            (.startActivity (.getContext v) intent)))))))
+
+(deftrait :text-style
+  "Sets text decorations on a TextView.
+
+  Value is a keyword or set of keywords:
+    :underline, :strikethrough, :bold, :italic, :bold-italic
+
+  Paint-flag styles (:underline, :strikethrough) are combined via bitwise OR.
+  Typeface styles (:bold, :italic, :bold-italic) call setTypeface."
+  [^TextView wdg, {:keys [text-style]} _]
+  (let [styles (if (set? text-style) text-style #{text-style})]
+    (when (styles :underline)
+      (.setPaintFlags wdg (bit-or (.getPaintFlags wdg) Paint/UNDERLINE_TEXT_FLAG)))
+    (when (styles :strikethrough)
+      (.setPaintFlags wdg (bit-or (.getPaintFlags wdg) Paint/STRIKE_THRU_TEXT_FLAG)))
+    (when (styles :bold)
+      (.setTypeface wdg (Typeface/create (.getTypeface wdg) Typeface/BOLD)))
+    (when (styles :italic)
+      (.setTypeface wdg (Typeface/create (.getTypeface wdg) Typeface/ITALIC)))
+    (when (styles :bold-italic)
+      (.setTypeface wdg (Typeface/create (.getTypeface wdg) Typeface/BOLD_ITALIC)))))
 
 ;; ### EditText property traits
 
