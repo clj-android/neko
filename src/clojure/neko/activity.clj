@@ -50,8 +50,13 @@
           ~activity ~(symbol (str (.getName Window) "/FEATURE_"
                                   (u/keyword->static-field (name feat))))))])
 
-(defmacro ^{:forms '[name & options & methods]} defactivity
-  "Creates an activity with the given full package-qualified name.
+(defmacro ^{:forms '[name & options & methods]
+             :deprecated "0.5.0"} defactivity
+  "DEPRECATED. Use ClojureActivity from runtime-core instead, which
+  dynamically delegates lifecycle methods to a Clojure namespace by
+  convention — no gen-class or AOT required.
+
+  Creates an activity with the given full package-qualified name.
   Optional arguments should be provided in a key-value fashion.
 
   Available optional arguments:

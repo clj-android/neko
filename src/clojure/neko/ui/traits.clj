@@ -519,7 +519,7 @@ next-level elements."
   value, and sets it as the background for the view."
   [^View wdg, {:keys [background]} _]
   (condp instance? background
-    Drawable (.setBackgroundDrawable wdg ^Drawable background)
+    Drawable (.setBackground wdg ^Drawable background)
     (.setBackgroundColor wdg (coerce-color background))))
 
 (deftrait :visibility

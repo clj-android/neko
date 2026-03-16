@@ -1,4 +1,7 @@
 (ns neko.tools.repl
+  "DEPRECATED. Use clj-android.repl.server from runtime-repl instead.
+  ClojureApp auto-starts nREPL in debug builds without requiring this
+  namespace."
   (:require [neko.log :as log])
   (:import android.content.Context
            android.util.Log
