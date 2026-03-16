@@ -39,8 +39,8 @@
   "Links an atom and a SharedPreferences file so that whenever the atom is
   modified changes are propagated down to SP. Only private mode is supported to
   avoid inconsistency between the atom and SP."
-  [atom prefs-file-name]
-  (let [^SharedPreferences sp (get-shared-preferences prefs-file-name :private)]
+  [context atom prefs-file-name]
+  (let [^SharedPreferences sp (get-shared-preferences context prefs-file-name :private)]
     (reset! atom (reduce (fn [m [key val]] (assoc m (keyword key) val))
                          {} (.getAll sp)))
     (add-watch atom ::sp-wrapper
@@ -59,7 +59,7 @@
   be persisted between application launches. Be aware that if you add an
   unsupported value to the cell it will not be saved which can lead to
   inconsistencies."
-  [cell-name prefs-file-name]
+  [context cell-name prefs-file-name]
   `(do (def ~cell-name (cell {}))
-       (when App/instance
-         (bind-atom-to-prefs ~cell-name ~prefs-file-name))))
+       (when ~context
+         (bind-atom-to-prefs ~context ~cell-name ~prefs-file-name))))
