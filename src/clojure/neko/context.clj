@@ -5,6 +5,13 @@
   (:import android.content.Context
            neko.App))
 
+(defn set-app-context!
+  "Sets the global application context used by neko's convenience functions.
+  Call this early in your app's initialization (e.g., from your Activity's
+  onCreate) if your Application class is not neko.App."
+  [^android.app.Application app]
+  (set! App/instance app))
+
 (defmacro get-service
   "Gets a system service for the given type. Type is a keyword that names the
   service. Examples include :alarm for the alarm service and
