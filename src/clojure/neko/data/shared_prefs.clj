@@ -1,7 +1,8 @@
 (ns neko.data.shared-prefs
   "Utilities for interoperating with SharedPreferences class. The original idea
   is by Artur Malabarba."
-  (:require [clojure.data :as data])
+  (:require [clojure.data :as data]
+            [neko.reactive :refer [cell]])
   (:import [android.content Context SharedPreferences SharedPreferences$Editor]
            neko.App))
 
@@ -53,12 +54,12 @@
                    (.commit editor))))))
 
 (defmacro defpreferences
-  "Defines a new atom that will be bound to the given SharedPreferences file.
+  "Defines a new cell that will be bound to the given SharedPreferences file.
   The atom can only contain primitive values and strings, and its contents will
   be persisted between application launches. Be aware that if you add an
-  unsupported value to the atom it will not be saved which can lead to
+  unsupported value to the cell it will not be saved which can lead to
   inconsistencies."
-  [atom-name prefs-file-name]
-  `(do (def ~atom-name (atom {}))
+  [cell-name prefs-file-name]
+  `(do (def ~cell-name (cell {}))
        (when App/instance
-         (bind-atom-to-prefs ~atom-name ~prefs-file-name))))
+         (bind-atom-to-prefs ~cell-name ~prefs-file-name))))
