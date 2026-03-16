@@ -59,7 +59,7 @@
   be persisted between application launches. Be aware that if you add an
   unsupported value to the cell it will not be saved which can lead to
   inconsistencies."
-  [context cell-name prefs-file-name]
+  [cell-name prefs-file-name]
   `(do (def ~cell-name (cell {}))
        (when App/instance
          (bind-atom-to-prefs ~cell-name ~prefs-file-name))))
