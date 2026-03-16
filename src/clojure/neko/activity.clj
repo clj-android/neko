@@ -240,5 +240,38 @@
         code  (.registerPermissionCallback activity callback)]
     (.requestPermissions activity perms code)))
 
+(defn start-intent-sender-for-result
+  "Launches an IntentSender for a result with automatic request-code management.
+
+  Used for Google Play billing, credential manager, in-app updates, and
+  other flows that provide an IntentSender rather than an Intent.
+
+  `activity` must be a ClojureActivity instance. `intent-sender` is an
+  android.content.IntentSender.
+
+  Options (as trailing keyword args):
+    :on-result    (fn [activity result-code intent]) — called on RESULT_OK.
+                  Required.
+    :on-cancel    (fn [activity]) — called when result is not OK. Optional.
+    :fill-in      Intent with extras to merge into the launch. Optional.
+    :flag-mask    int — flags mask. Default 0.
+    :flag-values  int — flags values. Default 0.
+    :extra-flags  int — additional flags. Default 0.
+
+  Example:
+    (start-intent-sender-for-result activity pending-intent-sender
+      :on-result (fn [activity result-code data]
+                   (handle-billing-result data)))"
+  [^ClojureActivity activity intent-sender
+   & {:keys [on-result on-cancel fill-in flag-mask flag-values extra-flags]}]
+  {:pre [(instance? ClojureActivity activity)
+         (some? on-result)]}
+  (let [code (.registerResultCallback activity on-result on-cancel)]
+    (.startIntentSenderForResult activity intent-sender code
+                                 (or fill-in nil)
+                                 (int (or flag-mask 0))
+                                 (int (or flag-values 0))
+                                 (int (or extra-flags 0)))))
+
 (defn get-state [^ActivityWithState activity]
   (.getState activity))
