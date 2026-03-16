@@ -5,7 +5,9 @@
             [neko.debug :refer [all-activities safe-for-ui]]
             [neko.internal :as u])
   (:import android.app.Activity
+           android.content.Intent
            [android.view View Window]
+           com.goodanser.clj_android.runtime.ClojureActivity
            neko.ActivityWithState))
 
 (defn ^View get-decor-view
@@ -142,6 +144,101 @@
                 [~(vary-meta (first args) assoc :tag name)
                  ~@(rest args)]
                 (safe-for-ui ~@body)))))))
+
+(defn start-activity-for-result
+  "Launches an activity for result with automatic request-code management.
+
+  `activity` must be a ClojureActivity instance. `action-or-intent` is either
+  an Intent object or a string action (e.g. Intent/ACTION_OPEN_DOCUMENT_TREE).
+
+  Options (as trailing keyword args):
+    :on-result  (fn [activity result-code intent]) — called when result arrives
+                with RESULT_OK. Required.
+    :on-cancel  (fn [activity]) — called when result is not OK. Optional.
+    :type       MIME type string (e.g. \"image/*\"). Only used when
+                action-or-intent is a string action.
+    :category   Category string to add to the intent. Only used when
+                action-or-intent is a string action.
+
+  Request codes 0–9999 are reserved for manual use with on-activity-result.
+  Auto-generated codes start at 10000.
+
+  Example:
+    (start-activity-for-result activity Intent/ACTION_OPEN_DOCUMENT_TREE
+      :on-result (fn [activity result-code data]
+                   (let [uri (.getData data)]
+                     (swap! prefs* assoc :directory (str uri)))))"
+  [^ClojureActivity activity action-or-intent & {:keys [on-result on-cancel type category]}]
+  {:pre [(instance? ClojureActivity activity)
+         (some? on-result)]}
+  (let [^Intent intent (if (instance? Intent action-or-intent)
+                         action-or-intent
+                         (cond-> (Intent. ^String action-or-intent)
+                           type     (.setType type)
+                           category (.addCategory category)))
+        code (.registerResultCallback activity on-result on-cancel)]
+    (.startActivityForResult activity intent code)))
+
+(defn start-activity
+  "Launches an activity without expecting a result.
+
+  `activity` must be an Activity instance. `action-or-intent` is either
+  an Intent object or a string action.
+
+  Options (as trailing keyword args):
+    :type       MIME type string (e.g. \"image/*\"). Only used when
+                action-or-intent is a string action.
+    :category   Category string to add to the intent. Only used when
+                action-or-intent is a string action.
+    :extras     Map of string keys to values, added via .putExtra.
+    :data       URI to set on the intent via .setData.
+    :flags      Integer flags to set on the intent via .setFlags.
+
+  Example:
+    (start-activity activity Intent/ACTION_VIEW
+      :data (Uri/parse \"https://example.com\"))"
+  [^Activity activity action-or-intent & {:keys [type category extras data flags]}]
+  {:pre [(instance? Activity activity)]}
+  (let [^Intent intent (if (instance? Intent action-or-intent)
+                         action-or-intent
+                         (cond-> (Intent. ^String action-or-intent)
+                           type     (.setType type)
+                           category (.addCategory category)
+                           data     (.setData data)
+                           flags    (.setFlags (int flags))))]
+    (when (and extras (not (instance? Intent action-or-intent)))
+      (doseq [[k v] extras]
+        (.putExtra intent ^String k ^String (str v))))
+    (.startActivity activity intent)))
+
+(defn request-permissions
+  "Requests runtime permissions with automatic request-code management.
+
+  `activity` must be a ClojureActivity instance. `permissions` is a
+  collection of permission strings (e.g. [Manifest$permission/CAMERA]).
+
+  The callback receives (activity permissions grant-results) where
+  grant-results is an int array of PackageManager/PERMISSION_GRANTED
+  or PERMISSION_DENIED values.
+
+  Request codes 0–9999 are reserved for manual use with
+  on-request-permissions-result. Auto-generated codes start at 10000.
+
+  Example:
+    (request-permissions activity
+      [Manifest$permission/CAMERA
+       Manifest$permission/RECORD_AUDIO]
+      (fn [activity permissions grant-results]
+        (when (every? #(= % PackageManager/PERMISSION_GRANTED)
+                      grant-results)
+          (start-recording!))))"
+  [^ClojureActivity activity permissions callback]
+  {:pre [(instance? ClojureActivity activity)
+         (some? callback)
+         (seq permissions)]}
+  (let [perms (into-array String permissions)
+        code  (.registerPermissionCallback activity callback)]
+    (.requestPermissions activity perms code)))
 
 (defn get-state [^ActivityWithState activity]
   (.getState activity))
