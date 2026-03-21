@@ -4,7 +4,9 @@
             [neko.ui.traits :refer [apply-trait]]
             [neko.internal :refer [keyword->setter reflect-setter
                                  reflect-constructor]]
-            [neko.threading :refer [on-ui]])
+            [neko.threading :refer [on-ui]]
+            [neko.util :refer [edit-distance]]
+            [clojure.string :as string])
   (:import android.content.res.Configuration
            neko.App
            java.lang.ref.WeakReference))
@@ -39,6 +41,27 @@
       attributes)
     [attributes nil]))
 
+;; ## Error reporting
+
+(defn- suggest-attributes
+  "Returns up to 3 known attribute names similar to `attr-kw` for
+  the given widget keyword, sorted by edit distance."
+  [widget-kw attr-kw]
+  (let [attr-name (name attr-kw)
+        all-traits (kw/all-traits widget-kw)
+        ;; Gather trait attributes from apply-trait metadata
+        trait-attrs (into #{} (mapcat (fn [t]
+                                        (get-in (meta #'apply-trait)
+                                                [:attributes t] [t]))
+                                      all-traits))
+        candidates (map name trait-attrs)]
+    (->> candidates
+         (map (fn [c] {:name c :dist (edit-distance attr-name c)}))
+         (filter #(<= (:dist %) (max 3 (quot (count attr-name) 2))))
+         (sort-by :dist)
+         (take 3)
+         (map #(keyword (:name %))))))
+
 ;; ## Attributes
 
 (defn apply-default-setters-from-attributes
@@ -49,11 +72,20 @@
   there, it is perceived as a static field of the class."
   [widget-kw widget attributes]
   (doseq [[attribute value] attributes]
-    (let [real-value (kw/value widget-kw value attribute)]
-      (.invoke (reflect-setter (type widget)
-                               (keyword->setter attribute)
-                               (type real-value))
-               widget (into-array (vector real-value))))))
+    (let [real-value (kw/value widget-kw value attribute)
+          setter-name (keyword->setter attribute)]
+      (let [method (try
+                     (reflect-setter (type widget) setter-name (type real-value))
+                     (catch NoSuchMethodException _
+                       (let [suggestions (suggest-attributes widget-kw attribute)
+                             msg (str attribute " is not a known attribute of "
+                                      widget-kw
+                                      (when (seq suggestions)
+                                        (str "; did you mean "
+                                             (string/join ", " suggestions)
+                                             "?")))]
+                         (throw (IllegalArgumentException. msg)))))]
+        (.invoke method widget (into-array (vector real-value)))))))
 
 (defn apply-attributes
   "Takes UI widget keyword, a widget object, a map of attributes and
@@ -70,7 +102,22 @@
          attrs attributes, new-opts options]
     (if trait
       (let [[attributes-fn options-fn]
-            (apply-trait trait widget attrs options)]
+            (try
+              (apply-trait trait widget attrs options)
+              (catch Exception e
+                (let [;; Find which attributes this trait consumes
+                      trait-attrs (get-in (meta #'apply-trait)
+                                          [:attributes trait] [trait])
+                      relevant (select-keys attrs trait-attrs)
+                      msg (str "Error applying trait " trait " on " widget-kw
+                               (when (seq relevant)
+                                 (str " with " (pr-str relevant)))
+                               ": " (.getMessage e))]
+                  (throw (ex-info msg {::ui-error true
+                                       :trait trait
+                                       :widget widget-kw
+                                       :values relevant}
+                                  e)))))]
         (recur rest (attributes-fn attrs) (options-fn new-opts)))
       (do
         (apply-default-setters-from-attributes widget-kw widget attrs)
@@ -103,31 +150,59 @@
   [context tree options]
   (if (sequential? tree)
     (let [[widget-kw attributes & inside-elements] tree
-          _ (assert (and (keyword? widget-kw) (map? attributes)))
-          attributes (merge (kw/default-attributes widget-kw) attributes)
-          wdg (if-let [constr (:custom-constructor attributes)]
-                (apply constr context (:constructor-args attributes))
-                (construct-element widget-kw context
-                                   (:constructor-args attributes)))
-          init-fn (:on-create attributes)
-          cleaned-attrs (dissoc attributes :constructor-args :custom-constructor :on-create)
-          [resolved-attrs bindings] (extract-cells cleaned-attrs (cell-class))
-          new-opts (apply-attributes widget-kw wdg resolved-attrs options)]
-      (when (seq bindings)
-        (let [wdg-weak (WeakReference. wdg)]
-          (doseq [[attr c] bindings]
-            (let [wkey [::reactive (System/identityHashCode wdg) attr]]
-              (add-watch c wkey
-                (fn [_ _ old-val new-val]
-                  (if-let [w (.get wdg-weak)]
-                    (when (not= old-val new-val)
-                      (on-ui (config w attr new-val)))
-                    (remove-watch c wkey))))))))
-      (doseq [element inside-elements :when element]
-        (.addView ^android.view.ViewGroup wdg
-                  (make-ui-element context element new-opts)))
-      (when init-fn (init-fn wdg))
-      wdg)
+          _ (assert (and (keyword? widget-kw) (map? attributes))
+                    (str "Invalid UI element: expected [keyword map ...], got "
+                         (pr-str (take 2 tree))))]
+      (try
+        (let [attributes (merge (kw/default-attributes widget-kw) attributes)
+              wdg (if-let [constr (:custom-constructor attributes)]
+                    (apply constr context (:constructor-args attributes))
+                    (construct-element widget-kw context
+                                       (:constructor-args attributes)))
+              init-fn (:on-create attributes)
+              cleaned-attrs (dissoc attributes :constructor-args :custom-constructor :on-create)
+              [resolved-attrs bindings] (extract-cells cleaned-attrs (cell-class))
+              new-opts (apply-attributes widget-kw wdg resolved-attrs options)]
+          (when (seq bindings)
+            (let [wdg-weak (WeakReference. wdg)]
+              (doseq [[attr c] bindings]
+                (let [wkey [::reactive (System/identityHashCode wdg) attr]]
+                  (add-watch c wkey
+                    (fn [_ _ old-val new-val]
+                      (if-let [w (.get wdg-weak)]
+                        (when (not= old-val new-val)
+                          (on-ui (config w attr new-val)))
+                        (remove-watch c wkey))))))))
+          (doseq [element inside-elements :when element]
+            (try
+              (.addView ^android.view.ViewGroup wdg
+                        (make-ui-element context element new-opts))
+              (catch Exception e
+                (if (::ui-error (ex-data e))
+                  (throw e)
+                  (throw (ex-info (str "In child of " widget-kw ": "
+                                       (.getMessage e))
+                                  {::ui-error true
+                                   :parent widget-kw
+                                   :child-tree (if (sequential? element)
+                                                 (take 2 element)
+                                                 element)}
+                                  e))))))
+          (when init-fn (init-fn wdg))
+          wdg)
+        (catch clojure.lang.ExceptionInfo e
+          (if (::ui-error (ex-data e))
+            (throw e)
+            (throw (ex-info (str "In " widget-kw ": " (.getMessage e))
+                            {::ui-error true :widget widget-kw}
+                            e))))
+        (catch Exception e
+          (throw (ex-info (str "In " widget-kw " " (pr-str (keys attributes)) ": "
+                               (.getMessage e))
+                          {::ui-error true
+                           :widget widget-kw
+                           :attributes (keys attributes)}
+                          e)))))
     tree))
 
 (defn make-ui

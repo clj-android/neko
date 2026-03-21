@@ -2,7 +2,8 @@
   "This namespace provides utilities to connect the keywords to the
   actual UI classes, define the hierarchy relations between the
   elements and the values for the keywords representing values."
-  (:require [clojure.string :as string])
+  (:require [clojure.string :as string]
+            [neko.util :refer [edit-distance]])
   (:use [neko.internal :only [keyword->static-field reflect-field]])
   (:import [android.widget LinearLayout Button CheckBox EditText ListView
             SearchView ImageView ImageView$ScaleType RelativeLayout ScrollView
@@ -158,6 +159,19 @@
   (swap! keyword-mapping assoc-in [kw :classname] classname)
   (swap! reverse-mapping assoc-in classname kw))
 
+(defn- suggest-elements
+  "Returns up to 3 element keywords similar to `kw`, sorted by edit distance."
+  [kw]
+  (let [kw-name (name kw)
+        candidates (->> (keys @keyword-mapping)
+                        (filter #(:classname (@keyword-mapping %))))]
+    (->> candidates
+         (map (fn [c] {:kw c :dist (edit-distance kw-name (name c))}))
+         (filter #(<= (:dist %) (max 3 (quot (count kw-name) 2))))
+         (sort-by :dist)
+         (take 3)
+         (map :kw))))
+
 (defn classname
   "Gets the classname from the keyword-mapping map if the argument is
   a keyword. Otherwise considers the argument to already be a
@@ -165,8 +179,13 @@
   [classname-or-kw]
   (if (keyword? classname-or-kw)
     (or (get-in @keyword-mapping [classname-or-kw :classname])
-        (throw (Exception. (str "The class for " classname-or-kw
-                                " isn't present in the mapping."))))
+        (let [suggestions (suggest-elements classname-or-kw)
+              msg (str classname-or-kw " is not a known UI element"
+                       (when (seq suggestions)
+                         (str "; did you mean "
+                              (string/join ", " suggestions)
+                              "?")))]
+          (throw (IllegalArgumentException. msg))))
     classname-or-kw))
 
 (defn keyword-by-classname

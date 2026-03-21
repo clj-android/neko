@@ -32,6 +32,20 @@ android {
     }
 }
 
+// AGP's processJavaRes doesn't always track file changes in resources.srcDirs,
+// causing stale .clj files in incremental/composite builds.  Explicitly add
+// the Clojure source tree as a tracked input so the task re-runs on changes.
+afterEvaluate {
+    val clojureDir = file("src/clojure")
+    listOf("processDebugJavaRes", "processReleaseJavaRes").forEach { taskName ->
+        tasks.matching { it.name == taskName }.configureEach {
+            inputs.files(fileTree(clojureDir) { include("**/*.clj") })
+                .withPathSensitivity(org.gradle.api.tasks.PathSensitivity.RELATIVE)
+                .withPropertyName("clojureSources")
+        }
+    }
+}
+
 dependencies {
     // Clojure runtime — compileOnly because the app provides it
     compileOnly("org.clojure:clojure:1.12.0")
