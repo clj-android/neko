@@ -25,6 +25,12 @@
           c)
         (catch ClassNotFoundException _ nil))))
 
+(defn- cell-element?
+  "Returns true if v is a reactive Cell instance."
+  [v]
+  (when-let [cls (cell-class)]
+    (instance? cls v)))
+
 (defn- extract-cells
   "If cell-cls is non-nil, scans attributes for reactive cell values.
   Returns [resolved-attrs bindings] where resolved-attrs has cells
@@ -40,6 +46,19 @@
       [attributes []]
       attributes)
     [attributes nil]))
+
+(defn- normalize-cell-value
+  "Normalizes a cell's value into a vector of UI tree elements.
+  Accepts nil, a single UI tree vector, a seq of UI trees, or a View."
+  [value]
+  (cond
+    (nil? value) []
+    ;; A single UI tree vector like [:text-view {:text \"hi\"}]
+    (and (sequential? value) (keyword? (first value))) [value]
+    ;; A seq of UI trees or Views
+    (sequential? value) (vec value)
+    ;; A raw View
+    :else [value]))
 
 ;; ## Error reporting
 
@@ -123,7 +142,7 @@
         (apply-default-setters-from-attributes widget-kw widget attrs)
         new-opts))))
 
-(declare config)
+(declare config make-ui-element)
 
 ;; ## Widget creation
 
@@ -137,11 +156,55 @@
                                                 (map type constructor-args)))
                      (to-array (cons context constructor-args))))))
 
+(defn- realize-cell-children
+  "Builds View(s) from a cell's current value and adds them to parent.
+  Returns a vector of the Views added (for later removal)."
+  [context ^android.view.ViewGroup parent value options]
+  (let [elements (normalize-cell-value value)
+        views (mapv #(make-ui-element context % options) elements)]
+    (doseq [^android.view.View v views]
+      (.addView parent v))
+    views))
+
+(defn- bind-cell-child!
+  "Sets up a watch on a cell so that when its value changes, the old
+  child views are removed from parent and new ones are built and added
+  at the same position."
+  [context ^android.view.ViewGroup parent cell initial-views options]
+  (let [parent-weak (WeakReference. parent)
+        state (atom {:views initial-views})
+        wkey [::reactive-child (System/identityHashCode parent)
+              (System/identityHashCode cell)]]
+    (add-watch cell wkey
+      (fn [_ _ _ _]
+        (if-let [p (.get parent-weak)]
+          (on-ui
+            (let [{:keys [views]} @state
+                  insert-idx (if (seq views)
+                               (let [idx (.indexOfChild
+                                           ^android.view.ViewGroup p
+                                           ^android.view.View (first views))]
+                                 (if (neg? idx) (.getChildCount ^android.view.ViewGroup p) idx))
+                               (.getChildCount ^android.view.ViewGroup p))]
+              (doseq [^android.view.View v views]
+                (.removeView ^android.view.ViewGroup p v))
+              (let [elements (normalize-cell-value @cell)
+                    new-views (mapv #(make-ui-element context % options) elements)]
+                (doseq [[i ^android.view.View v] (map-indexed vector new-views)]
+                  (.addView ^android.view.ViewGroup p v (+ insert-idx i)))
+                (reset! state {:views new-views}))))
+          (remove-watch cell wkey))))))
+
 (defn make-ui-element
   "Creates a UI widget based on its keyword name, applies attributes
   to it, then recursively create its subelements and add them to the
   widget. Reactive cells in attribute values are automatically detected
   and bound — the widget updates when the cell changes.
+
+  Children may also be reactive cells. A cell child's value should be
+  a UI tree vector, a seq of UI tree vectors, a View, or nil. When the
+  cell's value changes, the old views are removed and new ones are
+  built and inserted at the same position.
 
   The special `:on-create` attribute takes a function of one argument
   (the widget) and is called after all traits and children are applied.
@@ -174,20 +237,24 @@
                           (on-ui (config w attr new-val)))
                         (remove-watch c wkey))))))))
           (doseq [element inside-elements :when element]
-            (try
-              (.addView ^android.view.ViewGroup wdg
-                        (make-ui-element context element new-opts))
-              (catch Exception e
-                (if (::ui-error (ex-data e))
-                  (throw e)
-                  (throw (ex-info (str "In child of " widget-kw ": "
-                                       (.getMessage e))
-                                  {::ui-error true
-                                   :parent widget-kw
-                                   :child-tree (if (sequential? element)
-                                                 (take 2 element)
-                                                 element)}
-                                  e))))))
+            (if (cell-element? element)
+              (let [initial-views (realize-cell-children
+                                    context wdg @element new-opts)]
+                (bind-cell-child! context wdg element initial-views new-opts))
+              (try
+                (.addView ^android.view.ViewGroup wdg
+                          (make-ui-element context element new-opts))
+                (catch Exception e
+                  (if (::ui-error (ex-data e))
+                    (throw e)
+                    (throw (ex-info (str "In child of " widget-kw ": "
+                                         (.getMessage e))
+                                    {::ui-error true
+                                     :parent widget-kw
+                                     :child-tree (if (sequential? element)
+                                                   (take 2 element)
+                                                   element)}
+                                    e)))))))
           (when init-fn (init-fn wdg))
           wdg)
         (catch clojure.lang.ExceptionInfo e
