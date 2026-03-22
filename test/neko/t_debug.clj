@@ -14,7 +14,7 @@
       (.superOnCreate this bundle)
       (dbg/keep-screen-on this)))
 
-  (let [activity (Robolectric/setupActivity neko.DebugActivity)]
+  (let [activity (-> (Robolectric/buildActivity neko.DebugActivity) .setup .get)]
     (is (= activity (dbg/*a)))
     (is (= activity (dbg/*a :test-debug)))
     (is (not= 0 (bit-and WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON

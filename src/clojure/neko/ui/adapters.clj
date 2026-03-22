@@ -7,7 +7,7 @@
             [neko.ui.mapping :as kw]
             [neko.ui.traits :refer [deftrait]])
   (:import android.view.View
-           [android.view ViewGroup]
+           [android.view ViewGroup ViewGroup$LayoutParams]
            android.widget.FrameLayout
            android.widget.FrameLayout$LayoutParams
            neko.data.sqlite.TaggedCursor

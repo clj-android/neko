@@ -1,7 +1,6 @@
 (ns neko.listeners.t-view
-  (:require [clojure.test :refer :all :exclude [deftest]]
-            [neko.listeners.view :as l]
-            [coa.droid-test :refer [deftest]])
+  (:require [clojure.test :refer :all]
+            [neko.listeners.view :as l])
   (:import [android.view KeyEvent MotionEvent]
            org.robolectric.RuntimeEnvironment
            neko.App))

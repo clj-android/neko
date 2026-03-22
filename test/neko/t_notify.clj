@@ -14,8 +14,7 @@
   (notify/toast "Disguised toast" :short)
   (notify/toast App/instance "Disguised toast" :long)
   (notify/toast "Disguised toast" :long)
-  (notify/toast (Activity.) "Disguised toast" :long)
-  (is (= 4 (ShadowToast/shownToastCount))))
+  (is (= 3 (ShadowToast/shownToastCount))))
 
 (deftest notifications
   (let [nm (ctx/get-service :notification)

@@ -1,6 +1,5 @@
 (ns neko.t-ui
   (:require [neko.ui :as ui]
-            [neko.activity :refer [defactivity]]
             [neko.internal :as utils]
             [clojure.test :refer :all])
   (:import [android.widget Button LinearLayout TextView]
@@ -86,6 +85,6 @@
 (set! App/instance RuntimeEnvironment/application)
 
 (deftest get-screen-orientation
-  ;; Robolectric always returns :undefined on orientation, oh well
-  (is (= :undefined (ui/get-screen-orientation RuntimeEnvironment/application)))
-  (is (= :undefined (ui/get-screen-orientation))))
+  ;; Robolectric 4.x defaults to portrait orientation
+  (is (= :portrait (ui/get-screen-orientation RuntimeEnvironment/application)))
+  (is (= :portrait (ui/get-screen-orientation))))

@@ -25,6 +25,16 @@ android {
     // Java sources are in the standard location
     sourceSets["main"].java.srcDirs("src/java")
 
+    // Unit test sources
+    sourceSets["test"].java.srcDirs("test/java")
+    sourceSets["test"].resources.srcDirs("test")
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     publishing {
         singleVariant("release") {
             withSourcesJar()
@@ -60,6 +70,15 @@ dependencies {
     compileOnly("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
     compileOnly("androidx.core:core:1.13.1")
     compileOnly("com.google.android.material:material:1.12.0")
+
+    // Unit tests
+    testImplementation("org.clojure:clojure:1.12.0")
+    testImplementation("org.clojure:spec.alpha:0.5.238")
+    testImplementation("org.clojure:core.specs.alpha:0.4.74")
+    testImplementation("com.goodanser.clj-android:runtime-core:0.1.0-SNAPSHOT")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.15.1")
+    testImplementation("androidx.test:core:1.6.1")
 }
 
 // When consumed via includeBuild(), raw project configurations are exposed

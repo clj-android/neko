@@ -1,6 +1,5 @@
 (ns neko.t-log
   (:require [clojure.test :refer :all]
-            [coa.droid-test :refer [unstub]]
             [neko.log :as log])
   (:import org.robolectric.shadows.ShadowLog
            android.util.Log))

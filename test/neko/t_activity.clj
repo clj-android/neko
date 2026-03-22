@@ -1,17 +1,14 @@
 (ns neko.t-activity
-  (:require [clojure.test :refer :all :exclude [deftest]]
+  (:require [clojure.test :refer :all]
             [neko.activity :refer [defactivity] :as a]
             [neko.debug :as dbg]
             [neko.ui :as ui]
-            [neko.find-view :refer [find-view]]
-            [coa.droid-test :refer [deftest]])
+            [neko.find-view :refer [find-view]])
   (:import android.app.Activity
            android.os.Bundle
            android.view.View
-           coa.droid_test.Helpers
            [android.widget LinearLayout TextView]
-           [org.robolectric Robolectric RuntimeEnvironment]
-           [org.robolectric.util ActivityController ComponentController]))
+           [org.robolectric Robolectric RuntimeEnvironment]))
 
 (def simple-ui [:linear-layout {:orientation :vertical}
                 [:text-view {:id ::tv
@@ -23,7 +20,7 @@
       (.getChildAt 0)))
 
 (defn make-activity []
-  (Robolectric/setupActivity Activity))
+  (-> (Robolectric/buildActivity Activity) .setup .get))
 
 (deftest set-content-view
   (testing "set View objects"
@@ -54,14 +51,14 @@
       (onCreate [this bundle]
         (.superOnCreate this bundle)
         (is (= [true] (a/request-window-features! this :progress)))))
-    (Robolectric/setupActivity neko.TestActivity))
+    (-> (Robolectric/buildActivity neko.TestActivity) .setup .get))
 
   (testing "multiple features"
     (defactivity neko.TestActivity
       (onCreate [this bundle]
         (.superOnCreate this bundle)
         (is (= [true true] (a/request-window-features! this :progress :no-title)))))
-    (Robolectric/setupActivity neko.TestActivity)))
+    (-> (Robolectric/buildActivity neko.TestActivity) .setup .get)))
 
 (definterface TestInterface
   (ifaceMethod []))
@@ -91,7 +88,6 @@
     (ifaceMethod [this]
       (is true)))
 
-  (let [controller (-> (Robolectric/buildActivity neko.DefActivity)
-                       .setup .stop)
-        activity (Helpers/getActivity controller)]
+  (let [activity (-> (Robolectric/buildActivity neko.DefActivity)
+                     .setup .stop .get)]
     (.ifaceMethod activity)))

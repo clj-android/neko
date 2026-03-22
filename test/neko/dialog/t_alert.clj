@@ -3,8 +3,7 @@
             [neko.activity :refer [defactivity]]
             [neko.listeners.dialog :as listeners]
             neko.t-activity
-            [coa.droid-test :refer [deftest]]
-            [clojure.test :refer :all :exclude [deftest]])
+            [clojure.test :refer :all])
   (:import android.app.AlertDialog
            android.content.DialogInterface
            [org.robolectric Robolectric RuntimeEnvironment]))

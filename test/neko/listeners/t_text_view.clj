@@ -1,7 +1,6 @@
 (ns neko.listeners.t-text-view
-  (:require [clojure.test :refer :all :exclude [deftest]]
-            [neko.listeners.text-view :as l]
-            [coa.droid-test :refer [deftest]])
+  (:require [clojure.test :refer :all]
+            [neko.listeners.text-view :as l])
   (:import [android.view KeyEvent MotionEvent]
            android.widget.TextView
            neko.App))

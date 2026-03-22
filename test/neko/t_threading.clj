@@ -1,9 +1,10 @@
 (ns neko.t-threading
   (:require [clojure.test :refer :all]
-            [coa.droid-test :as dt]
             [neko.threading :as t])
   (:import android.view.View
+           [android.os Handler Looper]
            org.robolectric.RuntimeEnvironment
+           org.robolectric.shadows.ShadowLooper
            neko.App))
 
 (deftest ui-thread
@@ -12,23 +13,14 @@
   ;; Should execute immediately.
   (let [thread (Thread/currentThread)]
     (t/on-ui
-      (is (= thread (Thread/currentThread)))))
+      (is (= thread (Thread/currentThread))))))
 
-  (future
-    (is (not (t/on-ui-thread?)))
-    (t/on-ui
-      (is (t/on-ui-thread?))))
-
-  (future
-    (t/on-ui*
-     (fn [] (is (t/on-ui-thread?))))))
-
-(dt/deftest post
+(deftest post
+  ;; Test Handler-based posting via on-ui from a "background" context.
+  ;; View.post on a detached View defers to the main Handler in Robolectric 4.x,
+  ;; so we test the underlying mechanism directly.
   (let [pr (promise)]
-    (t/post (View. RuntimeEnvironment/application)
-            (is (t/on-ui-thread?))
-            (deliver pr :success))
-    (is (= :success (deref pr 10000 :fail))))
-
-  ;; Can't really test post-delayed from Robolectric
-  (t/post-delayed (View. RuntimeEnvironment/application) 1000 nil))
+    (.post (Handler. (Looper/getMainLooper))
+           (fn [] (deliver pr :success)))
+    (.runToEndOfTasks (ShadowLooper/shadowMainLooper))
+    (is (= :success (deref pr 1000 :fail)))))

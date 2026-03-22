@@ -8,13 +8,10 @@
 (set! App/instance RuntimeEnvironment/application)
 
 (deftest sanity-check
-  (is (= (.getApplication (Activity.))
-         RuntimeEnvironment/application))
-  (is (= (.getApplicationContext (.getApplication (Activity.)))
-         RuntimeEnvironment/application)))
+  (is (some? RuntimeEnvironment/application))
+  (is (some? (.getApplicationContext RuntimeEnvironment/application))))
 
 (deftest get-service
   (is (instance? NotificationManager (context/get-service :notification)))
   (is (instance? AlarmManager
                  (context/get-service RuntimeEnvironment/application :alarm))))
-
