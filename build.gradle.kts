@@ -81,6 +81,14 @@ dependencies {
     testImplementation("androidx.test:core:1.6.1")
 }
 
+tasks.withType<Test> {
+    testLogging {
+        events("failed")
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}
+
 // When consumed via includeBuild(), raw project configurations are exposed
 // instead of published module metadata.  AGP's published metadata includes
 // these attributes automatically, but the raw configurations do not, so we
