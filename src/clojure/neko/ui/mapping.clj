@@ -48,7 +48,9 @@
     :edit-text {:classname android.widget.EditText
                 :inherits :view
                 :traits [:hint :input-type :on-text-change]
-                :values {:number      EditorInfo/TYPE_CLASS_NUMBER
+                :values {:number      (bit-or EditorInfo/TYPE_CLASS_NUMBER
+                                             EditorInfo/TYPE_NUMBER_FLAG_DECIMAL)
+                         :integer    EditorInfo/TYPE_CLASS_NUMBER
                          :datetime    EditorInfo/TYPE_CLASS_DATETIME
                          :text        EditorInfo/TYPE_CLASS_TEXT
                          :phone       EditorInfo/TYPE_CLASS_PHONE
